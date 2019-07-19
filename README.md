@@ -2,7 +2,7 @@
 基于[jingtum-lib-java](https://github.com/swtcpro/jingtum-lib-java)，适用Android钱包应用开发。
 
 ## 变更点
-1. 删除了挂单类和关系类的方法
+1. 删除了挂单类和关系类的方法，修改了部分代码以适用Android
 2. 添加了KeyStore和二维码的导入导出
 
 ## 接口说明
@@ -50,12 +50,12 @@ Wallet wallet = KeyStore.decrypt(pwd, keyStoreFile);
 
 ### 生成二维码
 ```java
-Bitmap bitmap = QrCodeGenerator.getQrCodeImage(data, 800, Color.BLACK);
+Bitmap bitmap = QRGenerator.getQrCodeImage(data, 800, Color.BLACK);
 ```
 
 ### 解析二维码
 ```java
-String data = QrCodeGenerator.decodeQrImage(bitmap);
+String data = QRGenerator.decodeQrImage(bitmap);
 ```
 
 ### jingtum-lib-java部分
