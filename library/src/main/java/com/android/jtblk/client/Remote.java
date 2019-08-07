@@ -511,8 +511,8 @@ public class Remote {
                         } else {
                             effect.put("cancelled", true);
                         }
-                        effect.put("gets", parseAmount(fields.get("TakerGets")));
-                        effect.put("pays", parseAmount(fields.get("TakerPays")));
+                        effect.put("gets", parseAmount(fieldsPrev.get("TakerGets")));
+                        effect.put("pays", parseAmount(fieldsPrev.get("TakerPays")));
                         if (parseAmount(fieldsPrev.get("TakerGets")) != null) {
                             effect.put("paid", amountSubtract(
                                     parseAmount(fieldsPrev.get("TakerGets")),
@@ -669,7 +669,19 @@ public class Remote {
     public AmountInfo amountSubtract(AmountInfo amount1, AmountInfo amount2) {
         if (amount1 != null && amount2 != null) {
             try {
-                return amountAdd(amount1, amount2);
+                if (amount1 == null) {
+                    return amount2;
+                }
+                if (amount2 == null) {
+                    return amount1;
+                }
+                if (amount1 != null && amount2 != null) {
+                    BigDecimal amountBg1 = new BigDecimal(amount1.getValue());
+                    BigDecimal amountBg2 = new BigDecimal(amount2.getValue());
+                    amount1.setValue(String.valueOf(amountBg1.subtract(amountBg2)));
+                    return amount1;
+                }
+                return null;
             } catch (Exception e) {
                 throw new RemoteException("to map error");
             }
@@ -703,6 +715,7 @@ public class Remote {
         }
         return null;
     }
+
 
     public JSONObject processAffectNode(JSONObject object) {
         JSONObject result = new JSONObject();
