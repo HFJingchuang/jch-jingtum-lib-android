@@ -656,11 +656,11 @@ public class Remote {
     }
 
     public String amountRatio(AmountInfo amount1, AmountInfo amount2) {
-        if (amount1 != null && amount2 != null && "0".equals(amount1.getValue()) && "0".equals(amount2.getValue())) {
+        if (amount1 != null && amount2 != null && !"0".equals(amount1.getValue()) && !"0".equals(amount2.getValue())) {
             BigDecimal bi1 = new BigDecimal(amount1.getValue());
             BigDecimal bi2 = new BigDecimal(amount2.getValue());
-            BigDecimal bi3 = bi1.divide(bi2, 6, BigDecimal.ROUND_HALF_UP);
-            return String.valueOf(bi3.doubleValue());
+            BigDecimal bi3 = bi1.divide(bi2, BigDecimal.ROUND_HALF_UP);
+            return bi3.stripTrailingZeros().toPlainString() + " " + amount1.getCurrency();
         } else {
             return "";
         }
@@ -678,7 +678,7 @@ public class Remote {
                 if (amount1 != null && amount2 != null) {
                     BigDecimal amountBg1 = new BigDecimal(amount1.getValue());
                     BigDecimal amountBg2 = new BigDecimal(amount2.getValue());
-                    amount1.setValue(String.valueOf(amountBg1.subtract(amountBg2)));
+                    amount1.setValue((amountBg1.subtract(amountBg2)).stripTrailingZeros().toPlainString());
                     return amount1;
                 }
                 return null;
