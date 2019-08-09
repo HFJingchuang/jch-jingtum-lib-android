@@ -52,12 +52,24 @@ public class TransactionTest {
         Transaction tx = remote.buildPaymentTx(account, to, amount);
         tx.setSecret(secret);
         List<String> memos = new ArrayList<String>();
-        memos.add("测试数据111");
+        memos.add("SWT转账");
         memos.add("测试数据222");
         memos.add("测试数据333");
         tx.addMemo(memos);
         TransactionInfo bean = tx.submit();
         Assert.assertNotNull(bean.getTxJson().getHash());
+
+        amount = new AmountInfo();
+        amount.setCurrency("CNY");
+        amount.setValue("2");
+        amount.setIssuer("jBciDE8Q3uJjf111VeiUNM775AMKHEbBLS");
+        tx = remote.buildPaymentTx(account, to, amount);
+        tx.setSecret(secret);
+        List<String> memos1 = new ArrayList<String>();
+        memos1.add("CNY转账测试");
+        tx.addMemo(memos);
+        TransactionInfo bean1 = tx.submit();
+        Assert.assertNotNull(bean1.getTxJson().getHash());
     }
 
     /**

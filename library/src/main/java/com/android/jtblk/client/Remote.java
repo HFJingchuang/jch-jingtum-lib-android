@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.jtblk.client.bean.Account;
 import com.android.jtblk.client.bean.AccountData;
 import com.android.jtblk.client.bean.AccountInfo;
+import com.android.jtblk.client.bean.AccountRelations;
 import com.android.jtblk.client.bean.AccountTums;
 import com.android.jtblk.client.bean.AccountTx;
 import com.android.jtblk.client.bean.AmountInfo;
@@ -263,6 +264,32 @@ public class Remote {
         String msg = requestAccount("account_currencies", account, ledger, "");
         AccountTums accountTums = JsonUtils.toEntity(msg, AccountTums.class);
         return accountTums;
+    }
+
+    /**
+     * 4.10 获得账号关系
+     *
+     * @param account 井通钱包地址
+     * @param type    关系类型，固定的三个值：trust、authorize、freeze
+     * @return
+     */
+    public AccountRelations requestAccountRelations(String account, Object ledger, String type) {
+        String command = "";
+        if (!CheckUtils.isValidType("relation", type)) {
+            throw new RemoteException("invalid relation type");
+        }
+        switch (type) {
+            case "trust":
+                command = "account_lines";
+                break;
+            case "authorize":
+            case "freeze":
+                command = "account_relation";
+                break;
+        }
+        String msg = requestAccount(command, account, ledger, type);
+        AccountRelations accountRelations = JsonUtils.toEntity(msg, AccountRelations.class);
+        return accountRelations;
     }
 
     /**
@@ -659,7 +686,7 @@ public class Remote {
         if (amount1 != null && amount2 != null && !"0".equals(amount1.getValue()) && !"0".equals(amount2.getValue())) {
             BigDecimal bi1 = new BigDecimal(amount1.getValue());
             BigDecimal bi2 = new BigDecimal(amount2.getValue());
-            BigDecimal bi3 = bi1.divide(bi2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal bi3 = bi1.divide(bi2, 6, BigDecimal.ROUND_HALF_UP);
             return bi3.stripTrailingZeros().toPlainString() + " " + amount1.getCurrency();
         } else {
             return "";
@@ -840,7 +867,8 @@ public class Remote {
             } else if (tx instanceof Object) {
                 JSONObject jsonObject = (JSONObject) tx;
                 amount.setCurrency(jsonObject.get("currency").toString());
-                amount.setValue(jsonObject.get("value").toString());
+                BigDecimal value = new BigDecimal(jsonObject.get("value").toString());
+                amount.setValue(value.stripTrailingZeros().toPlainString());
                 amount.setIssuer(jsonObject.get("issuer").toString());
             }
             return amount;

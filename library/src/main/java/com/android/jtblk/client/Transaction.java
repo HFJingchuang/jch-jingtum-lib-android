@@ -67,150 +67,150 @@ public class Transaction {
 	private Map txJson = new HashMap();
 	// 交易类型：Payment
 	private String TransactionType;
-	
+
 	public Transaction() {
 	}
-	
+
 	public Transaction(Remote remote) {
 		this.remote = remote;
 	}
-	
+
 	public Object getAmountObj() {
 		return amountObj;
 	}
-	
+
 	public void setAmountObj(Object amountObj) {
 		this.amountObj = amountObj;
 	}
-	
+
 	public void setTransactionType(String transactionType) {
 		TransactionType = transactionType;
 	}
-	
+
 	public Remote getRemote() {
 		return remote;
 	}
-	
+
 	public void setRemote(Remote remote) {
 		this.remote = remote;
 	}
-	
+
 	public String getAccount() {
 		return account;
 	}
-	
+
 	public void setAccount(String account) {
 		this.account = account;
 	}
-	
+
 	public String getTo() {
 		return to;
 	}
-	
+
 	public void setTo(String to) {
 		this.to = to;
 	}
-	
+
 	public AmountInfo getAmount() {
 		return amount;
 	}
-	
+
 	public void setAmount(AmountInfo amount) {
 		this.amount = amount;
 	}
-	
+
 	public AmountInfo getLimit() {
 		return limit;
 	}
-	
+
 	public void setLimit(AmountInfo limit) {
 		this.limit = limit;
 	}
-	
+
 	public AmountInfo getTakerGets() {
 		return takerGets;
 	}
-	
+
 	public void setTakerGets(AmountInfo takerGets) {
 		this.takerGets = takerGets;
 	}
-	
+
 	public AmountInfo getTakerPays() {
 		return takerPays;
 	}
-	
+
 	public void setTakerPays(AmountInfo takerPays) {
 		this.takerPays = takerPays;
 	}
-	
+
 	public String getSecret() {
 		return secret;
 	}
-	
+
 	public void setSecret(String secret) {
 		this.secret = secret;
 	}
-	
+
 	public String getTxnSignature() {
 		return txnSignature;
 	}
-	
+
 	public void setTxnSignature(String txnSignature) {
 		this.txnSignature = txnSignature;
 	}
-	
+
 	public String getRelationType() {
 		return relationType;
 	}
-	
+
 	public void setRelationType(String relationType) {
 		this.relationType = relationType;
 	}
-	
+
 	public String getPropertyType() {
 		return propertyType;
 	}
-	
+
 	public void setPropertyType(String propertyType) {
 		this.propertyType = propertyType;
 	}
-	
+
 	public String getFlags() {
 		return flags;
 	}
-	
+
 	public void setFlags(String flags) {
 		this.flags = flags;
 		this.txJson.put("Flags", flags);
 	}
-	
+
 	public Integer getSequence() {
 		return sequence;
 	}
-	
+
 	public void setSequence(Integer sequence) {
 		this.sequence = sequence;
 	}
-	
+
 	public String getCommand() {
 		return command;
 	}
-	
+
 	public void setCommand(String command) {
 		this.command = command;
 	}
-	
+
 	public Map getTxJson() {
 		return txJson;
 	}
-	
+
 	public void setTxJson(Map txJson) {
 		this.txJson = txJson;
 	}
-	
+
 	/**
 	 * 添加备注信息
-	 * 
+	 *
 	 * @param memos
 	 */
 	public void addMemo(List<String> memos) {
@@ -227,10 +227,10 @@ public class Transaction {
 		txJson.put("Memos", memosArray);
 		this.memos = memos;
 	}
-	
+
 	/**
 	 * 签名
-	 * 
+	 *
 	 * @param secret
 	 * @return
 	 */
@@ -282,7 +282,7 @@ public class Transaction {
 					Amount amount = new Amount(temp, Currency.fromString(amountInfo.getCurrency()), AccountID.fromAddress(amountInfo.getIssuer()));
 					offerCreate.as(Amount.TakerGets, amount);
 				}
-				
+
 				if (fee != null) {
 					offerCreate.as(Amount.Fee, String.valueOf(fee));
 				} else {
@@ -328,7 +328,7 @@ public class Transaction {
 //				relationSet.as(Amount.RelationType, txJson.get("RelationType"));
 				relationSet.as(AccountID.Account, account);
 				relationSet.as(AccountID.Target, txJson.get("Target"));
-				
+
 				AmountInfo amountInfo = (AmountInfo)txJson.get("LimitAmount");
 				BigDecimal temp = new BigDecimal(amountInfo.getValue());
 				Amount amount = new Amount(temp, Currency.fromString(amountInfo.getCurrency()), AccountID.fromAddress(amountInfo.getIssuer()));
@@ -350,10 +350,10 @@ public class Transaction {
 		}
 		return tx_blob;
 	}
-	
+
 	/**
 	 * 设置费用
-	 * 
+	 *
 	 * @param fee
 	 */
 	public void setFee(String fee) {
@@ -364,31 +364,31 @@ public class Transaction {
 		this.txJson.put("Fee", fee);
 		this.fee = feeInt;
 	}
-	
+
 	public Integer getFee() {
 		return fee;
 	}
-	
+
 	public void setFee(Integer fee) {
 		if (fee < 10) {
 			throw new RemoteException("fee is too low");
 		}
 		this.fee = fee;
 	}
-	
+
 	/**
 	 * 获取交易类型
-	 * 
+	 *
 	 * @return
 	 */
 	public String getTransactionType() {
 		return this.txJson.get("TransactionType") == null ? null : this.txJson.get("TransactionType").toString();
 	}
-	
+
 	public String getTxBlob() {
 		return this.txJson.get("blob") == null ? null : this.txJson.get("blob").toString();
 	}
-	
+
 	/*
 	 * public void setPath(String key){
 	 * if (key.length() != 40) {
@@ -413,29 +413,29 @@ public class Transaction {
 			throw new TransactionException(1004, "invalid amount to max");
 		}
 	}
-	
+
 	private Boolean localSign = false;
 	private Connection conn = null;
-	
+
 	public Boolean getLocalSign() {
 		return localSign;
 	}
-	
+
 	public void setLocalSign(Boolean localSign) {
 		this.localSign = localSign;
 	}
-	
+
 	public Connection getConn() {
 		return conn;
 	}
-	
+
 	public void setConn(Connection conn) {
 		this.conn = conn;
 	}
-	
+
 	/**
 	 * 提交交易信息
-	 * 
+	 *
 	 * @return
 	 */
 	public String submit(Connection conn, Boolean local_sign, Map params) {
@@ -458,10 +458,10 @@ public class Transaction {
 		String msg = conn.submit(params);
 		return msg;
 	}
-	
+
 	/**
 	 * 提交交易信息
-	 * 
+	 *
 	 * @return
 	 */
 	public TransactionInfo submit() {
