@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.jtblk.client.bean.Account;
 import com.android.jtblk.client.bean.AccountData;
 import com.android.jtblk.client.bean.AccountInfo;
+import com.android.jtblk.client.bean.AccountOffers;
 import com.android.jtblk.client.bean.AccountRelations;
 import com.android.jtblk.client.bean.AccountTums;
 import com.android.jtblk.client.bean.AccountTx;
@@ -290,6 +291,46 @@ public class Remote {
         String msg = requestAccount(command, account, ledger, type);
         AccountRelations accountRelations = JsonUtils.toEntity(msg, AccountRelations.class);
         return accountRelations;
+    }
+
+
+    /**
+     * 4.11 获得账号挂单
+     *
+     * @param account 井通钱包地址
+     * @return
+     */
+    public AccountOffers requestAccountOffers(String account, Object ledger) {
+        String msg = requestAccount("account_offers", account, ledger, "");
+        JSONObject json = JSONObject.parseObject(msg);
+        if ("success".equals(json.get("status"))) {
+            JSONObject result = JSONObject.parseObject(json.get("result").toString());
+            JSONArray array = JSONArray.parseArray(result.get("offers").toString());
+            for (Object object : array) {
+                JSONObject offer = (JSONObject) object;
+                String getsType = offer.get("taker_gets").getClass().toString();
+                if (!getsType.equals(JSONObject.class.toString())) {
+                    JSONObject takerGets = new JSONObject();
+                    takerGets.put("currency", Config.CURRENCY);
+                    takerGets.put("value", Utils.amountFormatDivide(offer.get("taker_gets").toString()));
+                    takerGets.put("issuer", "");
+                    offer.put("taker_gets", takerGets);
+                }
+                String paystType = offer.get("taker_pays").getClass().toString();
+                if (!paystType.equals(JSONObject.class.toString())) {
+                    JSONObject takerPays = new JSONObject();
+                    takerPays.put("currency", Config.CURRENCY);
+                    takerPays.put("value", Utils.amountFormatDivide(offer.get("taker_pays").toString()));
+                    takerPays.put("issuer", "");
+                    offer.put("taker_pays", takerPays);
+                }
+            }
+            result.put("offers", array);
+            json.put("result", result);
+            msg = json.toJSONString();
+        }
+        AccountOffers accountOffers = JsonUtils.toEntity(msg, AccountOffers.class);
+        return accountOffers;
     }
 
     /**

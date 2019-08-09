@@ -4,11 +4,14 @@ import android.support.test.runner.AndroidJUnit4;
 
 import com.android.jtblk.client.Remote;
 import com.android.jtblk.client.bean.AccountInfo;
+import com.android.jtblk.client.bean.AccountOffers;
 import com.android.jtblk.client.bean.AccountRelations;
 import com.android.jtblk.client.bean.AccountTums;
 import com.android.jtblk.client.bean.Line;
+import com.android.jtblk.client.bean.Offer;
 import com.android.jtblk.connection.Connection;
 import com.android.jtblk.connection.ConnectionFactory;
+import com.android.jtblk.utils.JsonUtils;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -16,7 +19,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class AccountTest {
-    static String addr = "jnwme4ivyEvVBJpYEH3vV2TmNcxDhsCYxH";
+    static String addr = "jBvrdYc6G437hipoCiEpTwrWSRBS2ahXN6";
     static String server = "wss://s.jingtum.com:5020";// 生产环境
     //    static String server = "ws://ts5.jingtum.com:5020";// 测试环境
     static Boolean local_sign = true;// 是否使用本地签名方式提交交易
@@ -76,5 +79,16 @@ public class AccountTest {
             System.out.println("冻结指向账户：" + line.getLimitPeer());
             System.out.println("============authorize====================");
         }
+    }
+
+    /**
+     * 获取账号订单列表
+     *
+     * @return
+     */
+    public static AccountOffers getAccountOffers() {
+        AccountOffers bean = remote.requestAccountOffers(addr, null);
+        Assert.assertEquals(1, bean.getOffers().size());
+        return bean;
     }
 }
