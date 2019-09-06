@@ -493,8 +493,8 @@ public class Remote {
             case "offernew":
                 //Transaction.flags.OfferCreate.Sell 是一个常量
                 transtacion.setOffertype((tx.get("Flags") != null ? "sell" : "buy"));
-                transtacion.setGets(parseAmount(tx.get("TakerGets")));
-                transtacion.setPays(parseAmount(tx.get("TakerPays")));
+                transtacion.setGets(parseAmount(tx.get("TakerPays")));
+                transtacion.setPays(parseAmount(tx.get("TakerGets")));
                 transtacion.setSeq(Integer.valueOf(tx.get("Sequence").toString()));
                 break;
             case "offercancel":
@@ -583,8 +583,8 @@ public class Remote {
                                     !isAmountZero(parseAmount(fieldsFinal.get("TakerGets")))))) {
 
                         transtacion.setCounterparty(tx.get("Account").toString());
-                        transtacion.setGets(parseAmount(tx.get("TakerGets")));
-                        transtacion.setPays(parseAmount(tx.get("TakerPays")));
+                        transtacion.setGets(parseAmount(tx.get("TakerPays")));
+                        transtacion.setPays(parseAmount(tx.get("TakerGets")));
 
                         effect.put("effect", "offer_partially_funded");
                         JSONObject _json = new JSONObject();
@@ -608,13 +608,13 @@ public class Remote {
                         effect.put("gets", parseAmount(fieldsPrev.get("TakerGets")));
                         effect.put("pays", parseAmount(fieldsPrev.get("TakerPays")));
                         if (parseAmount(fieldsPrev.get("TakerGets")) != null) {
-                            effect.put("paid", amountSubtract(
+                            effect.put("got", amountSubtract(
                                     parseAmount(fieldsPrev.get("TakerGets")),
                                     parseAmount(fields.get("TakerGets"))));
                         }
 
-                        if (parseAmount(fieldsPrev.get("TakerGets")) != null) {
-                            effect.put("got", amountSubtract(parseAmount(fieldsPrev.get("TakerPays")),
+                        if (parseAmount(fieldsPrev.get("TakerPays")) != null) {
+                            effect.put("paid", amountSubtract(parseAmount(fieldsPrev.get("TakerPays")),
                                     parseAmount(fields.get("TakerPays"))));
                         }
 
@@ -625,8 +625,8 @@ public class Remote {
                         if (effect.get("effect").equals("offer_funded")) {
 
                             transtacion.setCounterparty(tx.get("Account").toString());
-                            transtacion.setGets(parseAmount(tx.get("TakerGets")));
-                            transtacion.setPays(parseAmount(tx.get("TakerPays")));
+                            transtacion.setGets(parseAmount(tx.get("TakerPays")));
+                            transtacion.setPays(parseAmount(tx.get("TakerGets")));
 
                             fields = fieldsPrev;
                             JSONObject _object = new JSONObject();
@@ -638,11 +638,11 @@ public class Remote {
                                 _object.put("hash", JSONObject.parseObject(node.get("fields").toString()).get("PreviousTxnID"));
                             }
                             effect.put("counterparty", _object);
-                            effect.put("paid", amountSubtract(
+                            effect.put("got", amountSubtract(
                                     parseAmount(JSONObject.parseObject(node.get("fieldsPrev").toString()).get("TakerGets")),
                                     parseAmount(JSONObject.parseObject(node.get("fields").toString()).get("TakerGets"))));
 
-                            effect.put("got", amountSubtract(
+                            effect.put("paid", amountSubtract(
                                     parseAmount(JSONObject.parseObject(node.get("fieldsPrev").toString()).get("TakerPays")),
                                     parseAmount(JSONObject.parseObject(node.get("fields").toString()).get("TakerPays"))));
 
