@@ -21,7 +21,7 @@ public class Publisher<CompatHack extends Publisher.Callback> {
         this.on(TransactionsImpl.OnTransaction.class, Remote::onTransaction);
     }
     public static interface Callback<T> {
-        public void called(T args);
+        public void called(T args) throws Exception;
     }
 
     public static interface ErrBack<T> extends Callback<T> {
@@ -44,7 +44,7 @@ public class Publisher<CompatHack extends Publisher.Callback> {
         add(key, executor, cb, true);
     }
 
-    public <A, T extends Callback<A>> int emit(Class<T> key, A args) {
+    public <A, T extends Callback<A>> int emit(Class<T> key, A args) throws Exception {
         if (logger.isLoggable(Level.FINE)) {
             log(Level.FINE, "Emitting {0} from thread: {1}", key.getSimpleName(), Thread.currentThread());
         }
@@ -81,7 +81,7 @@ public class Publisher<CompatHack extends Publisher.Callback> {
     }
 
     @SuppressWarnings("unchecked")
-    public static void execute(Object args, ContextedCallback pair) {
+    public static void execute(Object args, ContextedCallback pair) throws Exception {
         pair.callback.called(args);
     }
 
@@ -100,7 +100,11 @@ public class Publisher<CompatHack extends Publisher.Callback> {
             return new Runnable() {
                 @Override
                 public void run() {
-                    execute(args, ContextedCallback.this);
+                    try {
+                        execute(args, ContextedCallback.this);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             };
         }

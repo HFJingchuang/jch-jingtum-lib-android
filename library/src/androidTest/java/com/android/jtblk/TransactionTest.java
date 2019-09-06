@@ -30,7 +30,7 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class TransactionTest {
 
-    // static String server = "wss://s.jingtum.com:5020";// 生产环境
+//     static String server = "wss://s.jingtum.com:5020";// 生产环境
     static String server = "ws://ts5.jingtum.com:5020";// 测试环境
     static Boolean local_sign = true;// 是否使用本地签名方式提交交易
     static Connection conn = ConnectionFactory.getCollection(server);
@@ -42,7 +42,7 @@ public class TransactionTest {
      * @return
      */
     @Test
-    public void sendTransaction() {
+    public void sendTransaction() throws Exception {
         String account = "j3UcBBbes7HFgmTLmGkEQQShM2jdHbdGAe";
         String to = "jNn89aY84G23onFXupUd7bkMode6aKYMt8";
         String secret = "ssWiEpky7Bgj5GFrexxpKexYkeuUv";
@@ -78,7 +78,7 @@ public class TransactionTest {
      * @return
      */
     @Test
-    public void getTx() {
+    public void getTx() throws Exception {
         String hash = "77D66074F56B76618DF30B04DCDB12E0A5E8D3B895404402E46C737E7EB194BD";
         Account bean = remote.requestTx(hash);
         System.out.println("from:" + bean.getAccount());
@@ -102,7 +102,7 @@ public class TransactionTest {
      * @return
      */
     @Test
-    public void getSwtcBleans() {
+    public void getSwtcBleans() throws Exception {
         String account = "j3UcBBbes7HFgmTLmGkEQQShM2jdHbdGAe";
         AccountInfo bean = remote.requestAccountInfo(account, null, null);
         System.out.println("j3UcBBbes7HFgmTLmGkEQQShM2jdHbdGAe---SWTC余额：" + bean.getAccountData().getBalance());
@@ -115,7 +115,7 @@ public class TransactionTest {
      * @return
      */
     @Test
-    public void getTxs() {
+    public void getTxs() throws Exception {
         String account = "j3UcBBbes7HFgmTLmGkEQQShM2jdHbdGAe";
         AccountTx accountTx = remote.requestAccountTx(account, 5, null);// 前五条数据
         AccountTx accountTx2 = remote.requestAccountTx(account, 5, accountTx.getMarker());// 后五条数据

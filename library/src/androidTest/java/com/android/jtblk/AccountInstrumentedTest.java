@@ -37,7 +37,7 @@ public class AccountInstrumentedTest {
      * @return
      */
     @Test
-    public void getAccountSwtc() {
+    public void getAccountSwtc() throws Exception {
         String account = "j3UcBBbes7HFgmTLmGkEQQShM2jdHbdGAe";
         AccountInfo result1 = remote.requestAccountInfo(account, null, "trust");
         Log.v(TAG, "swtc：" + result1.getAccountData().getBalance());
@@ -58,7 +58,7 @@ public class AccountInstrumentedTest {
      * @return
      */
     @Test
-    public void getAccountTum() {
+    public void getAccountTum() throws Exception {
         String account = "jBciDE8Q3uJjf111VeiUNM775AMKHEbBLS";
         AccountTums result = remote.requestAccountTums(account, null);
         Log.v(TAG, "可接收Tum：" + result.getReceiveCurrencies().toString());
@@ -71,6 +71,6 @@ public class AccountInstrumentedTest {
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
-        assertEquals("com.android.jtwallet.test", appContext.getPackageName());
+        assertEquals("com.android.jtblk.test", appContext.getPackageName());
     }
 }

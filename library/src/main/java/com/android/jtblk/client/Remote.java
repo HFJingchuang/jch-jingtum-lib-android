@@ -87,7 +87,7 @@ public class Remote {
      * @param data
      * @return
      */
-    public String sendMessage(String command, Map<String, Object> data) {
+    public String sendMessage(String command, Map<String, Object> data) throws Exception {
         Map<String, Object> params = new HashMap();
         params.put("command", command);
         params.putAll(data);
@@ -102,7 +102,7 @@ public class Remote {
      *
      * @return
      */
-    public LedgerInfo requestLedgerInfo() {
+    public LedgerInfo requestLedgerInfo() throws Exception {
         Map<String, Object> params = new HashMap();
 //		params.put("streams", new String[] { "ledger", "server" });
         //订阅最新交易信息
@@ -116,7 +116,7 @@ public class Remote {
      *
      * @return
      */
-    public ServerInfo requestServerInfo() {
+    public ServerInfo requestServerInfo() throws Exception {
         ServerInfo ser = new ServerInfo();
         Map params = new HashMap();
         String msg = this.sendMessage("server_info", params);
@@ -128,7 +128,7 @@ public class Remote {
      *
      * @return
      */
-    public LedgerClosed requestLedgerClosed() {
+    public LedgerClosed requestLedgerClosed() throws Exception {
         Map params = new HashMap();
         String msg = this.sendMessage("ledger_closed", params);
         return JsonUtils.toEntity(msg, LedgerClosed.class);
@@ -142,7 +142,7 @@ public class Remote {
      * @param transactions      是否返回账本上的交易记录hash，默认false
      * @return
      */
-    public Ledger requestLedger(String ledgerIndexOrHash, boolean transactions) {
+    public Ledger requestLedger(String ledgerIndexOrHash, boolean transactions) throws Exception {
         Map params = new HashMap();
         // 校验,并将参数写入message对象
         Map message = new HashMap();
@@ -168,7 +168,7 @@ public class Remote {
      * @param hash 交易hash
      * @return
      */
-    public Account requestTx(String hash) {
+    public Account requestTx(String hash) throws Exception {
         Map params = new HashMap();
         // 校验,并将参数写入message对象
         if (TextUtils.isEmpty(hash)) {
@@ -233,7 +233,7 @@ public class Remote {
      * @param account 井通钱包地址
      * @return
      */
-    public AccountInfo requestAccountInfo(String account, Object ledger) {
+    public AccountInfo requestAccountInfo(String account, Object ledger) throws Exception {
         String msg = requestAccount("account_info", account, ledger, "");
         AccountInfo accountInfo = JsonUtils.toEntity(msg, AccountInfo.class);
         if (accountInfo != null) {
@@ -244,7 +244,7 @@ public class Remote {
         return accountInfo;
     }
 
-    public AccountInfo requestAccountInfo(String account, Object ledger, String type) {
+    public AccountInfo requestAccountInfo(String account, Object ledger, String type) throws Exception {
         String msg = requestAccount("account_info", account, ledger, type);
         AccountInfo accountInfo = JsonUtils.toEntity(msg, AccountInfo.class);
         if (accountInfo != null) {
@@ -261,7 +261,7 @@ public class Remote {
      * @param account 井通钱包地址
      * @return
      */
-    public AccountTums requestAccountTums(String account, Object ledger) {
+    public AccountTums requestAccountTums(String account, Object ledger) throws Exception {
         String msg = requestAccount("account_currencies", account, ledger, "");
         AccountTums accountTums = JsonUtils.toEntity(msg, AccountTums.class);
         return accountTums;
@@ -274,7 +274,7 @@ public class Remote {
      * @param type    关系类型，固定的三个值：trust、authorize、freeze
      * @return
      */
-    public AccountRelations requestAccountRelations(String account, Object ledger, String type) {
+    public AccountRelations requestAccountRelations(String account, Object ledger, String type) throws Exception {
         String command = "";
         if (!CheckUtils.isValidType("relation", type)) {
             throw new RemoteException("invalid relation type");
@@ -300,7 +300,7 @@ public class Remote {
      * @param account 井通钱包地址
      * @return
      */
-    public AccountOffers requestAccountOffers(String account, Object ledger) {
+    public AccountOffers requestAccountOffers(String account, Object ledger) throws Exception {
         String msg = requestAccount("account_offers", account, ledger, "");
         JSONObject json = JSONObject.parseObject(msg);
         if ("success".equals(json.get("status"))) {
@@ -342,7 +342,7 @@ public class Remote {
      * @param type
      * @return
      */
-    private String requestAccount(String command, String account, Object ledger, String type) {
+    private String requestAccount(String command, String account, Object ledger, String type) throws Exception {
         Map params = new HashMap();
         // 校验,并将参数写入message对象
         if (StringUtils.isNotEmpty(type)) {
@@ -386,7 +386,7 @@ public class Remote {
      * @param limit   限定返回多少条记录，默认200
      * @return
      */
-    public AccountTx requestAccountTx(String account, Integer limit, Marker marker) {
+    public AccountTx requestAccountTx(String account, Integer limit, Marker marker) throws Exception {
         if (limit == null || limit == 0) {
             limit = 200;
         }
@@ -438,7 +438,7 @@ public class Remote {
         return accountTx;
     }
 
-    public Transactions processTx(JSONObject txJsonObject, String account) {
+    public Transactions processTx(JSONObject txJsonObject, String account) throws Exception {
         Transactions transtacion = new Transactions();
         JSONObject tx = new JSONObject();
         JSONObject meta = new JSONObject();
@@ -559,16 +559,38 @@ public class Remote {
                 JSONObject fieldsPrev = node.getJSONObject("fieldsPrev");
                 JSONObject fieldsFinal = node.getJSONObject("fieldsFinal");
                 boolean sell = fields.get("Flags") != null ? true : false;
-                if (fields.get("Account").equals(account)) {
+                if (tx.get("Account").equals(account) && fieldsPrev != null) {
+                    effect.put("effect", "offer_bought");
+                    JSONObject _object = new JSONObject();
+                    _object.put("account", JSONObject.parseObject(node.get("fields").toString()).get("Account"));
+                    _object.put("seq", JSONObject.parseObject(node.get("fields").toString()).get("Sequence"));
+                    if (node.get("PreviousTxnID") != null) {
+                        _object.put("hash", JSONObject.parseObject(node.get("fields").toString()).get("PreviousTxnID"));
+                    } else {
+                        _object.put("hash", JSONObject.parseObject(node.get("fields").toString()).get("PreviousTxnID"));
+                    }
+                    effect.put("counterparty", _object);
+                    effect.put("type", sell ? "bought" : "sold");
+                    effect.put("paid", amountSubtract(
+                            parseAmount(fieldsPrev.get("TakerPays")),
+                            parseAmount(JSONObject.parseObject(node.get("fields").toString()).get("TakerPays"))));
+                    effect.put("got", amountSubtract(
+                            parseAmount(fieldsPrev.get("TakerGets")),
+                            parseAmount(JSONObject.parseObject(node.get("fields").toString()).get("TakerGets"))));
+                } else {
                     if ("ModifiedNode".equals(node.get("diffType")) ||
                             ("DeletedNode".equals(node.get("diffType")) && fieldsPrev != null && fieldsFinal != null && (fieldsPrev.get("TakerGets") != null &&
                                     !isAmountZero(parseAmount(fieldsFinal.get("TakerGets")))))) {
 
                         effect.put("effect", "offer_partially_funded");
                         JSONObject _json = new JSONObject();
-                        _json.put("account", tx.get("Account"));
-                        _json.put("seq", tx.get("Sequence"));
-                        _json.put("hash", tx.get("hash"));
+                        _json.put("account", JSONObject.parseObject(node.get("fields").toString()).get("Account"));
+                        _json.put("seq", JSONObject.parseObject(node.get("fields").toString()).get("Sequence"));
+                        if (node.get("PreviousTxnID") != null) {
+                            _json.put("hash", JSONObject.parseObject(node.get("fields").toString()).get("PreviousTxnID"));
+                        } else {
+                            _json.put("hash", JSONObject.parseObject(node.get("fields").toString()).get("PreviousTxnID"));
+                        }
                         effect.put("counterparty", _json);
                         if (node.get("diffType").equals("DeletedNode")) {
                             if (isAmountZero(parseAmount(fields.get("TakerGets")))) {
@@ -592,18 +614,20 @@ public class Remote {
                                     parseAmount(fields.get("TakerPays"))));
                         }
 
-
                         effect.put("type", sell ? "sold" : "bought");
-
                     } else {
                         effect.put("effect", "CreatedNode".equals(node.get("diffType")) ? "offer_created" : fieldsPrev != null && fieldsPrev.get("TakerPays") != null ? "offer_funded" : "offer_cancelled");
 
                         if (effect.get("effect").equals("offer_funded")) {
                             fields = fieldsPrev;
                             JSONObject _object = new JSONObject();
-                            _object.put("account", tx.get("Account"));
-                            _object.put("seq", tx.get("Sequence"));
-                            _object.put("hash", tx.get("hash"));
+                            _object.put("account", JSONObject.parseObject(node.get("fields").toString()).get("Account"));
+                            _object.put("seq", JSONObject.parseObject(node.get("fields").toString()).get("Sequence"));
+                            if (node.get("PreviousTxnID") != null) {
+                                _object.put("hash", JSONObject.parseObject(node.get("fields").toString()).get("PreviousTxnID"));
+                            } else {
+                                _object.put("hash", JSONObject.parseObject(node.get("fields").toString()).get("PreviousTxnID"));
+                            }
                             effect.put("counterparty", _object);
                             effect.put("paid", amountSubtract(
                                     parseAmount(JSONObject.parseObject(node.get("fieldsPrev").toString()).get("TakerGets")),
@@ -637,25 +661,8 @@ public class Remote {
 
                     }
                     effect.put("seq", JSONObject.parseObject(node.get("fields").toString()).get("Sequence"));
-                } else if (tx.get("Account").equals(account) && fieldsPrev != null) {
-                    effect.put("effect", "offer_bought");
-                    JSONObject _object = new JSONObject();
-                    _object.put("account", JSONObject.parseObject(node.get("fields").toString()).get("Account"));
-                    _object.put("seq", JSONObject.parseObject(node.get("fields").toString()).get("Sequence"));
-                    if (node.get("PreviousTxnID") != null) {
-                        _object.put("hash", JSONObject.parseObject(node.get("fields").toString()).get("PreviousTxnID"));
-                    } else {
-                        _object.put("hash", JSONObject.parseObject(node.get("fields").toString()).get("PreviousTxnID"));
-                    }
-                    effect.put("counterparty", _object);
-                    effect.put("type", sell ? "bought" : "sold");
-                    effect.put("paid", amountSubtract(
-                            parseAmount(fieldsPrev.get("TakerPays")),
-                            parseAmount(JSONObject.parseObject(node.get("fields").toString()).get("TakerPays"))));
-                    effect.put("got", amountSubtract(
-                            parseAmount(fieldsPrev.get("TakerGets")),
-                            parseAmount(JSONObject.parseObject(node.get("fields").toString()).get("TakerGets"))));
                 }
+
                 // add price
                 if ((effect.get("gets") != null && effect.get("pays") != null) || (effect.get("got") != null && effect.get("paid") != null)) {
                     Boolean created = effect.get("effect").toString().equals("offer_created") && effect.get("type").toString().equals("buy");
@@ -664,8 +671,6 @@ public class Remote {
                     Boolean bought = effect.get("effect").toString().equals("offer_bought") && effect.get("type").toString().equals("bought");
                     Boolean partially_funded = effect.get("effect").toString().equals("offer_partially_funded") && effect.get("type").toString().equals("bought");
                     effect.put("price", getPrice(effect, (created || funded || cancelled || bought || partially_funded)));
-
-
                 }
             }
             if (transtacion.getType().equals("offereffect") && node.get("entryType").equals("AccountRoot")) {
@@ -685,19 +690,17 @@ public class Remote {
                 transtacion.getEffects().add(effect);
             }
         }
-
-
         return transtacion;
     }
 
-    public Boolean isAmountZero(AmountInfo amount) {
+    public Boolean isAmountZero(AmountInfo amount) throws Exception {
         if (StringUtils.isBlank(amount.getValue())) {
             return false;
         }
         return Integer.valueOf(amount.getValue()) < 1e-12;
     }
 
-    public String getPrice(JSONObject effect, boolean funded) {
+    public String getPrice(JSONObject effect, boolean funded) throws Exception {
         AmountInfo g = new AmountInfo();
         AmountInfo p = new AmountInfo();
         if (effect.get("got") != null && effect.get("got") != "") {
@@ -723,18 +726,37 @@ public class Remote {
 
     }
 
-    public String amountRatio(AmountInfo amount1, AmountInfo amount2) {
+    public String amountRatio(AmountInfo amount1, AmountInfo amount2) throws Exception {
         if (amount1 != null && amount2 != null && !"0".equals(amount1.getValue()) && !"0".equals(amount2.getValue())) {
             BigDecimal bi1 = new BigDecimal(amount1.getValue());
             BigDecimal bi2 = new BigDecimal(amount2.getValue());
-            BigDecimal bi3 = bi1.divide(bi2, 6, BigDecimal.ROUND_HALF_UP);
-            return bi3.stripTrailingZeros().toPlainString() + " " + amount1.getCurrency();
+            String curreny1 = amount1.getCurrency();
+            String curreny2 = amount2.getCurrency();
+            BigDecimal bi3;
+            String currency;
+            if (TextUtils.equals(curreny1, "CNY")) {
+                bi3 = bi1.divide(bi2, 6, BigDecimal.ROUND_HALF_UP);
+                currency = curreny1;
+            } else if (TextUtils.equals(curreny2, "CNY")) {
+                bi3 = bi2.divide(bi1, 6, BigDecimal.ROUND_HALF_UP);
+                currency = curreny2;
+            } else if (TextUtils.equals(curreny1, "SWT")) {
+                bi3 = bi1.divide(bi2, 6, BigDecimal.ROUND_HALF_UP);
+                currency = curreny1;
+            } else if (TextUtils.equals(curreny2, "SWT")) {
+                bi3 = bi2.divide(bi1, 6, BigDecimal.ROUND_HALF_UP);
+                currency = curreny2;
+            } else {
+                bi3 = bi1.divide(bi2, 6, BigDecimal.ROUND_HALF_UP);
+                currency = curreny1;
+            }
+            return bi3.stripTrailingZeros().toPlainString() + " " + currency;
         } else {
             return "";
         }
     }
 
-    public AmountInfo amountSubtract(AmountInfo amount1, AmountInfo amount2) {
+    public AmountInfo amountSubtract(AmountInfo amount1, AmountInfo amount2) throws Exception {
         if (amount1 != null && amount2 != null) {
             try {
                 if (amount1 == null) {
@@ -757,7 +779,7 @@ public class Remote {
         return null;
     }
 
-    public Map amountNegate(Map amount) {
+    public Map amountNegate(Map amount) throws Exception {
         if (amount == null) {
             return amount;
         }
@@ -768,7 +790,7 @@ public class Remote {
         return map;
     }
 
-    public AmountInfo amountAdd(AmountInfo amount1, AmountInfo amount2) {
+    public AmountInfo amountAdd(AmountInfo amount1, AmountInfo amount2) throws Exception {
         if (amount1 == null) {
             return amount2;
         }
@@ -785,7 +807,7 @@ public class Remote {
     }
 
 
-    public JSONObject processAffectNode(JSONObject object) {
+    public JSONObject processAffectNode(JSONObject object) throws Exception {
         JSONObject result = new JSONObject();
         String[] arrays = new String[]{"CreatedNode", "ModifiedNode", "DeletedNode"};
         for (int i = 0; i < arrays.length; i++) {
@@ -819,7 +841,7 @@ public class Remote {
         return result;
     }
 
-    public List formatArgs(JSONArray args) {
+    public List formatArgs(JSONArray args) throws Exception {
         List list = new ArrayList();
         if (args != null) {
             for (int i = 0; i < args.size(); i++) {
@@ -830,7 +852,7 @@ public class Remote {
         return list;
     }
 
-    public String hexToString(String str) {
+    public String hexToString(String str) throws Exception {
         List<String> list = new ArrayList<String>();
         int i = 0;
         if (str.length() % 2 == 0) {
@@ -843,7 +865,7 @@ public class Remote {
         return TextUtils.join("", list);
     }
 
-    public static String unicode2String(String unicode) {
+    public static String unicode2String(String unicode) throws Exception {
 
         StringBuffer string = new StringBuffer();
         String[] hex = unicode.split("\\\\u");
@@ -857,7 +879,7 @@ public class Remote {
     }
 
 
-    public AmountInfo reverseAmount(JSONObject limitAmount, String account) {
+    public AmountInfo reverseAmount(JSONObject limitAmount, String account) throws Exception {
         AmountInfo amount = new AmountInfo();
         amount.setCurrency(limitAmount.get("currency").toString());
         amount.setValue(limitAmount.get("value").toString());
@@ -865,7 +887,7 @@ public class Remote {
         return amount;
     }
 
-    public String txnType(Map tx, String account) {
+    public String txnType(Map tx, String account) throws Exception {
         if ((tx.get("Account") != null && tx.get("Account").toString().equals(account)) || (tx.get("Target") != null && tx.get("Target").toString().equals(account)) ||
                 (tx.get("Destination") != null && tx.get("Destination").toString().equals(account)) || (tx.get("LimitAmount") != null && ((Map) tx.get("LimitAmount")).get("issuer").toString().equals(account))) {
             switch (tx.get("TransactionType").toString()) {
@@ -896,7 +918,7 @@ public class Remote {
         }
     }
 
-    public AmountInfo parseAmount(Object tx) {
+    public AmountInfo parseAmount(Object tx) throws Exception {
         if (tx != null) {
             AmountInfo amount = new AmountInfo();
             if (tx instanceof String) {
@@ -919,13 +941,13 @@ public class Remote {
     }
 
 
-    public boolean isNum(String amount) {
+    public boolean isNum(String amount) throws Exception {
         Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
         Matcher matcher = pattern.matcher(amount);
         return matcher.matches();
     }
 
-    public boolean isValidAmount(Map amount) {
+    public boolean isValidAmount(Map amount) throws Exception {
         if ((amount.get("value") != null && (amount.get("value").toString()).equals("0")) || !isNum(amount.get("value").toString())) {
             return false;
         }
@@ -942,7 +964,7 @@ public class Remote {
         return true;
     }
 
-    public boolean isValidCurrency(Map amount) {
+    public boolean isValidCurrency(Map amount) throws Exception {
         if (amount.get("currency") == null || !(amount.get("currency") instanceof String)
                 || amount.get("currency").toString().equals("")) {
             return false;
@@ -959,7 +981,7 @@ public class Remote {
      * @param amount 金额对象
      * @return
      */
-    private Object toAmount(AmountInfo amount) {
+    private Object toAmount(AmountInfo amount) throws Exception {
         String value = amount.getValue();
         BigDecimal temp = new BigDecimal(value);
         BigDecimal max_value = new BigDecimal("100000000000");
@@ -981,7 +1003,7 @@ public class Remote {
      *
      * @return
      */
-    public String submit(Map params) {
+    public String submit(Map params) throws Exception {
         params.remove("message");
         String msg = this.conn.submit(params);
         return msg;
@@ -993,7 +1015,7 @@ public class Remote {
      * @return
      */
 
-    public void transactions() {
+    public void transactions() throws Exception {
         RemoteInter romteInter = new TransactionsImpl();
         Request request = new Request(this, "subscribe");
         romteInter.submit(request);
@@ -1004,18 +1026,18 @@ public class Remote {
      *
      * @return
      */
-    public void ledge() {
+    public void ledge() throws Exception {
         RemoteInter romteInter = new LedgerCloseImpl();
         Request request = new Request(this, "subscribe");
         romteInter.submit(request);
     }
 
 
-    public static void onLedgerClosed(String message) {
+    public static void onLedgerClosed(String message) throws Exception {
         //System.out.println("ledger:"+message);
     }
 
-    public static void onTransaction(String message) {
+    public static void onTransaction(String message) throws Exception {
         //System.out.println("tx:"+message);
     }
 
@@ -1068,7 +1090,7 @@ public class Remote {
      * @param amount  支付金额对象Amount
      * @return Transaction
      */
-    public Transaction buildPaymentTx(String account, String to, AmountInfo amount) {
+    public Transaction buildPaymentTx(String account, String to, AmountInfo amount) throws Exception {
         Transaction tx = new Transaction();
         tx.setAccount(account);
         tx.setTo(to);

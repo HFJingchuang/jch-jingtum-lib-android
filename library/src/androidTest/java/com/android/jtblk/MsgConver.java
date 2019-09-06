@@ -29,7 +29,7 @@ public class MsgConver {
      * 14 支付
      */
     @Test
-    public void buildPaymentTx() {
+    public void buildPaymentTx() throws Exception {
         String from = "j3UcBBbes7HFgmTLmGkEQQShM2jdHbdGAe";
         String to = "jNn89aY84G23onFXupUd7bkMode6aKYMt8";
         String memo = "{\r\n"

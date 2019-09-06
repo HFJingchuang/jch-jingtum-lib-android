@@ -234,7 +234,7 @@ public class Transaction {
 	 * @param secret
 	 * @return
 	 */
-	public String sign(String secret) {
+	public String sign(String secret) throws Exception {
 		String tx_blob = "";
 		String type = (String) txJson.get("TransactionType");
 		AccountInfo ainfo = remote.requestAccountInfo(account, null, "trust");
@@ -438,7 +438,7 @@ public class Transaction {
 	 *
 	 * @return
 	 */
-	public String submit(Connection conn, Boolean local_sign, Map params) {
+	public String submit(Connection conn, Boolean local_sign, Map params) throws Exception {
 		String tx_json_transactionType = "";
 		String tx_json_blob = "WW";
 		if (local_sign) {
@@ -464,7 +464,7 @@ public class Transaction {
 	 *
 	 * @return
 	 */
-	public TransactionInfo submit() {
+	public TransactionInfo submit() throws Exception {
 		Map params = new HashMap();
 		String tx_json_blob = null;
 		if (remote.getLocalSign() != null && remote.getLocalSign()) {

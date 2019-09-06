@@ -4,6 +4,6 @@ import com.android.jtblk.client.Request;
 
 public interface RemoteInter {
 	
-	public String submit(Request request);
+	public String submit(Request request) throws Exception;
 
 }

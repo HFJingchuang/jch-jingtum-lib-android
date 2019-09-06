@@ -23,7 +23,7 @@ public class TransactionsImpl extends Publisher implements RemoteInter,Runnable{
 	}
 
 	@Override
-	public String submit(Request request) {
+	public String submit(Request request) throws Exception {
 		Map params = new HashMap();
 		params.put("streams", new String[] {"transactions"});		
 		return request.submit(params);
@@ -31,7 +31,11 @@ public class TransactionsImpl extends Publisher implements RemoteInter,Runnable{
 
 	@Override
 	public void run() {
-		emit(OnTransaction.class, message);
+		try {
+			emit(OnTransaction.class, message);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 }

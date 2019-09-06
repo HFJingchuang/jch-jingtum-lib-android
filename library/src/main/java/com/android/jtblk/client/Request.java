@@ -20,7 +20,7 @@ public class Request {
 	 * @param data
 	 * @return 包含两个参数：错误信息和结果信息
 	 */
-	public String submit(Map<String, Object> data) {
+	public String submit(Map<String, Object> data) throws Exception {
 		return remote.sendMessage(this.command, data);
 	}
 	

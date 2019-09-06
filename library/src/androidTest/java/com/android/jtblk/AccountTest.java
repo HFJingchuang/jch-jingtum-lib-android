@@ -30,7 +30,7 @@ public class AccountTest {
      * 获取账户swt
      */
     @Test
-    public void getAccountSwtc() {
+    public void getAccountSwtc() throws Exception {
 
         AccountInfo result1 = remote.requestAccountInfo(addr, null, "trust");
         Assert.assertEquals(addr, result1.getAccountData().getAccount());
@@ -44,7 +44,7 @@ public class AccountTest {
      * 获取账户可接收和发送的货币
      */
     @Test
-    public void getAccountTum() {
+    public void getAccountTum() throws Exception {
         AccountTums result = remote.requestAccountTums(addr, null);
         Assert.assertNotEquals(0, result.getReceiveCurrencies().size());
         Assert.assertNotEquals(0, result.getSendCurrencies().size());
@@ -54,7 +54,7 @@ public class AccountTest {
      * 获取账户关系（trust:账户拥有的其他通证）
      */
     @Test
-    public void getAccountRelations() {
+    public void getAccountRelations() throws Exception {
         AccountRelations result1 = remote.requestAccountRelations(addr, null, "trust");
         AccountRelations result2 = remote.requestAccountRelations(addr, null, "freeze");
         AccountRelations result3 = remote.requestAccountRelations(addr, null, "authorize");
@@ -86,7 +86,7 @@ public class AccountTest {
      *
      * @return
      */
-    public static AccountOffers getAccountOffers() {
+    public static AccountOffers getAccountOffers() throws Exception {
         AccountOffers bean = remote.requestAccountOffers(addr, null);
         Assert.assertEquals(1, bean.getOffers().size());
         return bean;
