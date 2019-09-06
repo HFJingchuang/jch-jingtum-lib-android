@@ -582,6 +582,10 @@ public class Remote {
                             ("DeletedNode".equals(node.get("diffType")) && fieldsPrev != null && fieldsFinal != null && (fieldsPrev.get("TakerGets") != null &&
                                     !isAmountZero(parseAmount(fieldsFinal.get("TakerGets")))))) {
 
+                        transtacion.setCounterparty(tx.get("Account").toString());
+                        transtacion.setGets(parseAmount(tx.get("TakerGets")));
+                        transtacion.setPays(parseAmount(tx.get("TakerPays")));
+
                         effect.put("effect", "offer_partially_funded");
                         JSONObject _json = new JSONObject();
                         _json.put("account", JSONObject.parseObject(node.get("fields").toString()).get("Account"));
@@ -619,6 +623,11 @@ public class Remote {
                         effect.put("effect", "CreatedNode".equals(node.get("diffType")) ? "offer_created" : fieldsPrev != null && fieldsPrev.get("TakerPays") != null ? "offer_funded" : "offer_cancelled");
 
                         if (effect.get("effect").equals("offer_funded")) {
+
+                            transtacion.setCounterparty(tx.get("Account").toString());
+                            transtacion.setGets(parseAmount(tx.get("TakerGets")));
+                            transtacion.setPays(parseAmount(tx.get("TakerPays")));
+
                             fields = fieldsPrev;
                             JSONObject _object = new JSONObject();
                             _object.put("account", JSONObject.parseObject(node.get("fields").toString()).get("Account"));
