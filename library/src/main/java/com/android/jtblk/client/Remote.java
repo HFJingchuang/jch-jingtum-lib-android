@@ -650,8 +650,8 @@ public class Remote {
                         }
                         // 3. offer_created
                         if (effect.get("effect").equals("offer_created")) {
-                            effect.put("gets", parseAmount(fields.get("TakerGets")));
-                            effect.put("pays", parseAmount(fields.get("TakerPays")));
+                            effect.put("gets", parseAmount(fields.get("TakerPays")));
+                            effect.put("pays", parseAmount(fields.get("TakerGets")));
                             effect.put("type", sell ? "sell" : "buy");
                         }
                         // 4. offer_cancelled
@@ -660,11 +660,11 @@ public class Remote {
                             effect.put("hash", fields.get("PreviousTxnID"));
                             // collect data for cancel transaction type
                             if (transtacion.getType().equals("offercancel")) {
-                                transtacion.setGets(parseAmount(fields.get("TakerGets")));
-                                transtacion.setPays(parseAmount(fields.get("TakerPays")));
+                                transtacion.setGets(parseAmount(fields.get("TakerPays")));
+                                transtacion.setPays(parseAmount(fields.get("TakerGets")));
                             }
-                            effect.put("gets", parseAmount(fields.get("TakerGets")));
-                            effect.put("pays", parseAmount(fields.get("TakerPays")));
+                            effect.put("gets", parseAmount(fields.get("TakerPays")));
+                            effect.put("pays", parseAmount(fields.get("TakerGets")));
                             effect.put("type", sell ? "sell" : "buy");
                         }
 
