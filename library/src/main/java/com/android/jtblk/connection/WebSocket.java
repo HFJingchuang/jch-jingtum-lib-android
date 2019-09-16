@@ -227,14 +227,18 @@ public class WebSocket extends WebSocketClient {
                         int timeout = new BigInteger(new java.text.DecimalFormat("0").format(timeoutd)).intValue();
                         timeout = timeout > maxReconnectInterval ? maxReconnectInterval : timeout;
                         logger.info(String.valueOf(timeout));
-                        reconnectTimerTask.re_schedule2(timeout);
+                        if (reconnectTimerTask != null) {
+                            reconnectTimerTask.re_schedule2(timeout);
+                        }
                     }
                 } catch (InterruptedException e) {
                     logger.error(e.getMessage(), e);
                 }
             }
         };
-        reconnectTimerTask.schedule(reconnectTimer, reconnectInterval);
+        if (reconnectTimerTask != null) {
+            reconnectTimerTask.schedule(reconnectTimer, reconnectInterval);
+        }
     }
 
     public void cancelReconnectionTimer() {
