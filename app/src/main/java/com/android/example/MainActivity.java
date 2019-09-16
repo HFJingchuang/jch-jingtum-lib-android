@@ -90,7 +90,11 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         getQrCode(keyStoreFile.toString());
-        transfer();
+        try {
+            transfer();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -105,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
         clipboardManager.setPrimaryClip(ClipData.newPlainText(label, text));
     }
 
-    public void transfer() {
+    public void transfer() throws Exception {
         AmountInfo amount = new AmountInfo();
         amount.setCurrency("SWT");
         amount.setValue("0.01");

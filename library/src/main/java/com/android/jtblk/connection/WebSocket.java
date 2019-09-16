@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -223,7 +224,7 @@ public class WebSocket extends WebSocketClient {
                             logger.info("连接失败，重试次数为:" + reconnectAttempts);
                         }
                         double timeoutd = reconnectInterval * Math.pow(reconnectDecay, reconnectAttempts);
-                        int timeout = Integer.parseInt(new java.text.DecimalFormat("0").format(timeoutd));
+                        int timeout = new BigInteger(new java.text.DecimalFormat("0").format(timeoutd)).intValue();
                         timeout = timeout > maxReconnectInterval ? maxReconnectInterval : timeout;
                         logger.info(String.valueOf(timeout));
                         reconnectTimerTask.re_schedule2(timeout);
@@ -236,7 +237,7 @@ public class WebSocket extends WebSocketClient {
         reconnectTimerTask.schedule(reconnectTimer, reconnectInterval);
     }
 
-    private void cancelReconnectionTimer() {
+    public void cancelReconnectionTimer() {
         if (reconnectTimer != null) {
             reconnectTimer.cancel();
             reconnectTimer = null;
