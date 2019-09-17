@@ -667,7 +667,7 @@ public class Remote {
                             effect.put("pays", parseAmount(fields.get("TakerGets")));
                             effect.put("type", sell ? "sell" : "buy");
                         } else {
-                            break;
+                            continue;
                         }
                     }
                     effect.put("seq", JSONObject.parseObject(node.get("fields").toString()).get("Sequence"));
