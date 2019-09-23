@@ -705,7 +705,7 @@ public class Remote {
         if (StringUtils.isBlank(amount.getValue())) {
             return false;
         }
-        return Integer.valueOf(amount.getValue()) < 1e-12;
+        return new BigDecimal(amount.getValue()).compareTo(new BigDecimal(1e-12)) < 0 ? false : true;
     }
 
     public String getPrice(JSONObject effect, boolean funded) throws Exception {
