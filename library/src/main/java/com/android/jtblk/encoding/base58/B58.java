@@ -216,9 +216,9 @@ public class B58 {
 		byte[] hashed = copyOfRange(HashUtils.doubleDigest(toHash), 0, 4);
 		byte[] checksum = copyOfRange(buffer, buffer.length - 4, buffer.length);
 		//TODO:下关关闭了校验，稍后确认问题
-//		if (!Arrays.equals(checksum, hashed)) {
-//			throw new EncodingFormatException("Checksum does not validate");
-//		}
+		if (!Arrays.equals(checksum, hashed)) {
+			throw new EncodingFormatException("Checksum does not validate");
+		}
 		return buffer;
 	}
 
