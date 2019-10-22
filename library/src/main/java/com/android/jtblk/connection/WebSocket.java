@@ -37,7 +37,8 @@ public class WebSocket extends WebSocketClient {
 
     private Integer reconnectAttempts = 0;
 
-    private Integer maxReconnectAttempts = 5000;
+//    private Integer maxReconnectAttempts = 5000;
+    private Integer maxReconnectAttempts = 10;
 
     private Timer reconnectTimer;
 
