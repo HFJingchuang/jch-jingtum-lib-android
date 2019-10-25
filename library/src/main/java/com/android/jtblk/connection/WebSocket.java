@@ -1,5 +1,11 @@
 package com.android.jtblk.connection;
 
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Message;
+import android.text.TextUtils;
+import android.util.Log;
+
 import com.android.jtblk.listener.Impl.LedgerCloseImpl;
 import com.android.jtblk.listener.Impl.TransactionsImpl;
 import com.android.jtblk.utils.JsonUtils;
@@ -22,6 +28,7 @@ import java.util.Map;
 import java.util.Timer;
 
 public class WebSocket extends WebSocketClient {
+    public static final String TAG = "JackHuaBin";
     final static String STATUS_OPEN = "open";
     final static Logger logger = LoggerFactory.getLogger(WebSocket.class);
     private volatile Map<String, String> results = new HashMap<String, String>();
@@ -37,7 +44,7 @@ public class WebSocket extends WebSocketClient {
 
     private Integer reconnectAttempts = 0;
 
-//    private Integer maxReconnectAttempts = 5000;
+    //private Integer maxReconnectAttempts = 5000;
     private Integer maxReconnectAttempts = 10;
 
     private Timer reconnectTimer;
@@ -154,6 +161,7 @@ public class WebSocket extends WebSocketClient {
             logger.info("已离线，主动关闭连接");
         } else {
             logger.error("已离线，被动关闭连接，重新连接");
+            Log.d(TAG, "onClose===============================");
             restartReconnectionTimer();
             logger.error("重新连接websocket，重连结果【" + this.getReadyState() + "】");
         }
@@ -164,6 +172,7 @@ public class WebSocket extends WebSocketClient {
         logger.error(ex.getMessage(), ex);
         //连接断开导致异常时，直接重新连接
         if (this.getReadyState() != ReadyState.OPEN) {
+            Log.d(TAG, "onError===============================");
             restartReconnectionTimer();
             logger.error("重新连接websocket，重连结果【" + this.getReadyState() + "】");
         }
@@ -198,58 +207,119 @@ public class WebSocket extends WebSocketClient {
     }
 
 
-    private void restartReconnectionTimer() {
+    /*private void restartReconnectionTimer() {
         cancelReconnectionTimer();
         reconnectTimer = new Timer("reconnectTimer");
         reconnectTimerTask = new ReschedulableTimerTask() {
 
             @Override
             public void run() {
-                if (reconnectAttempts >= maxReconnectAttempts) {
-                    cancelReconnectionTimer();
-                    if (debug) {
-                        logger.info("以达到最大重试次数:" + maxReconnectAttempts + "，已停止重试!!!!");
-                    }
-                }
-                reconnectAttempts++;
-                try {
-                    Boolean isOpen = reconnectBlocking();
-                    if (isOpen) {
-                        if (debug) {
-                            logger.info("连接成功，重试次数为:" + reconnectAttempts);
-                        }
+                synchronized (WebSocket.class) {
+                    if (reconnectAttempts >= maxReconnectAttempts) {
                         cancelReconnectionTimer();
-                        reconnectAttempts = 0;
-                    } else {
                         if (debug) {
-                            logger.info("连接失败，重试次数为:" + reconnectAttempts);
-                        }
-                        double timeoutd = reconnectInterval * Math.pow(reconnectDecay, reconnectAttempts);
-                        int timeout = new BigInteger(new java.text.DecimalFormat("0").format(timeoutd)).intValue();
-                        timeout = timeout > maxReconnectInterval ? maxReconnectInterval : timeout;
-                        logger.info(String.valueOf(timeout));
-                        if (reconnectTimerTask != null) {
-                            reconnectTimerTask.re_schedule2(timeout);
+                            logger.info("以达到最大重试次数:" + maxReconnectAttempts + "，已停止重试!!!!");
                         }
                     }
-                } catch (InterruptedException e) {
-                    logger.error(e.getMessage(), e);
+                    reconnectAttempts++;
+                    try {
+                        Boolean isOpen = reconnectBlocking();
+                        if (isOpen) {
+                            if (debug) {
+                                logger.info("连接成功，重试次数为:" + reconnectAttempts);
+                            }
+                            cancelReconnectionTimer();
+                            reconnectAttempts = 0;
+                        } else {
+                            if (debug) {
+                                logger.info("连接失败，重试次数为:" + reconnectAttempts);
+                            }
+                            double timeoutd = reconnectInterval * Math.pow(reconnectDecay, reconnectAttempts);
+                            int timeout = new BigInteger(new java.text.DecimalFormat("0").format(timeoutd)).intValue();
+                            Log.d(TAG, "timeoutd:" + timeoutd + ", timeout:" + timeout);
+                            timeout = timeout > maxReconnectInterval ? maxReconnectInterval : timeout;
+                            logger.info(String.valueOf(timeout));
+                            if (reconnectTimerTask != null) {
+                                reconnectTimerTask.re_schedule2(timeout);
+                            }
+                        }
+                    } catch (InterruptedException e) {
+                        logger.error(e.getMessage(), e);
+                    }
                 }
             }
         };
         if (reconnectTimerTask != null) {
             reconnectTimerTask.schedule(reconnectTimer, reconnectInterval);
         }
-    }
+    }*/
 
     public void cancelReconnectionTimer() {
-        if (reconnectTimer != null) {
+       /* if (reconnectTimer != null) {
             reconnectTimer.cancel();
             reconnectTimer = null;
         }
         if (reconnectTimerTask != null) {
             reconnectTimerTask.cancel();
             reconnectTimerTask = null;
+        }*/
+
+        if (mReconnectHandler != null) {
+            mReconnectHandler.removeCallbacksAndMessages(null);
+            reconnectAttempts = 0;
+        }
+    }
+
+    private static final int MSG_RECONNECT = 0x1001;
+    private static final int MSG_REQUEST_RECONNECT = 0x1002;
+    private volatile Handler mReconnectHandler;
+
+    private void restartReconnectionTimer() {
+        Log.d(TAG, "restartReconnectionTimer reconnectAttempts:" + reconnectAttempts);
+
+        if (mReconnectHandler == null) {
+            HandlerThread reconnectHandlerThread = new HandlerThread("mReconnectHandler");
+            reconnectHandlerThread.start();
+            mReconnectHandler = new Handler(reconnectHandlerThread.getLooper()) {
+                @Override
+                public void handleMessage(Message msg) {
+                    if (msg.what == MSG_RECONNECT) {
+                        Log.d(TAG, "execute reconnectTimerTask reconnectAttempts:" + reconnectAttempts);
+
+                        if (reconnectAttempts >= maxReconnectAttempts) {
+                            cancelReconnectionTimer();
+                            if (debug) {
+                                logger.info("以达到最大重试次数:" + maxReconnectAttempts + "，已停止重试!!!!");
+                            }
+
+                            return;
+                        }
+
+                        reconnectAttempts++;
+                        try {
+                            Boolean isOpen = reconnectBlocking();
+                            if (isOpen) {
+                                if (debug) {
+                                    logger.info("连接成功，重试次数为:" + reconnectAttempts);
+                                }
+                                cancelReconnectionTimer();
+                            } else {
+                                mReconnectHandler.sendEmptyMessageDelayed(MSG_RECONNECT, reconnectInterval);
+                            }
+                        } catch (InterruptedException e) {
+                            logger.error(e.getMessage(), e);
+                        }
+                    } else if (msg.what == MSG_REQUEST_RECONNECT) {
+                        if (!mReconnectHandler.hasMessages(MSG_RECONNECT)) {
+                            mReconnectHandler.sendEmptyMessage(MSG_RECONNECT);
+                        }
+                    }
+                }
+            };
+
+            mReconnectHandler.sendEmptyMessage(MSG_REQUEST_RECONNECT);
+        } else {
+            mReconnectHandler.sendEmptyMessage(MSG_REQUEST_RECONNECT);
         }
     }
 }
