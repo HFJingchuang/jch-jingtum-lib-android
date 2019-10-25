@@ -3,8 +3,6 @@ package com.android.jtblk.connection;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
-import android.text.TextUtils;
-import android.util.Log;
 
 import com.android.jtblk.listener.Impl.LedgerCloseImpl;
 import com.android.jtblk.listener.Impl.TransactionsImpl;
@@ -21,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -267,7 +264,7 @@ public class WebSocket extends WebSocketClient {
         }
     }
 
-    private static final int MSG_RECONNECT = 0x1001;
+    private static final int MSG_EXECUTE_RECONNECT = 0x1001;
     private static final int MSG_REQUEST_RECONNECT = 0x1002;
     private volatile Handler mReconnectHandler;
 
@@ -278,7 +275,7 @@ public class WebSocket extends WebSocketClient {
             mReconnectHandler = new Handler(reconnectHandlerThread.getLooper()) {
                 @Override
                 public void handleMessage(Message msg) {
-                    if (msg.what == MSG_RECONNECT) {
+                    if (msg.what == MSG_EXECUTE_RECONNECT) {
                         if (reconnectAttempts >= maxReconnectAttempts) {
                             cancelReconnectionTimer();
                             if (debug) {
@@ -297,14 +294,14 @@ public class WebSocket extends WebSocketClient {
                                 }
                                 cancelReconnectionTimer();
                             } else {
-                                mReconnectHandler.sendEmptyMessageDelayed(MSG_RECONNECT, reconnectInterval);
+                                mReconnectHandler.sendEmptyMessageDelayed(MSG_EXECUTE_RECONNECT, reconnectInterval);
                             }
                         } catch (InterruptedException e) {
                             logger.error(e.getMessage(), e);
                         }
                     } else if (msg.what == MSG_REQUEST_RECONNECT) {
-                        if (!mReconnectHandler.hasMessages(MSG_RECONNECT)) {
-                            mReconnectHandler.sendEmptyMessage(MSG_RECONNECT);
+                        if (!mReconnectHandler.hasMessages(MSG_EXECUTE_RECONNECT)) {
+                            mReconnectHandler.sendEmptyMessage(MSG_EXECUTE_RECONNECT);
                         }
                     }
                 }
