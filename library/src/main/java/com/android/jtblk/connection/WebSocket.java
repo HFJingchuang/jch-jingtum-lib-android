@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Timer;
 
 public class WebSocket extends WebSocketClient {
-    public static final String TAG = "JackHuaBin";
     final static String STATUS_OPEN = "open";
     final static Logger logger = LoggerFactory.getLogger(WebSocket.class);
     private volatile Map<String, String> results = new HashMap<String, String>();
@@ -161,7 +160,6 @@ public class WebSocket extends WebSocketClient {
             logger.info("已离线，主动关闭连接");
         } else {
             logger.error("已离线，被动关闭连接，重新连接");
-            Log.d(TAG, "onClose===============================");
             restartReconnectionTimer();
             logger.error("重新连接websocket，重连结果【" + this.getReadyState() + "】");
         }
@@ -172,7 +170,6 @@ public class WebSocket extends WebSocketClient {
         logger.error(ex.getMessage(), ex);
         //连接断开导致异常时，直接重新连接
         if (this.getReadyState() != ReadyState.OPEN) {
-            Log.d(TAG, "onError===============================");
             restartReconnectionTimer();
             logger.error("重新连接websocket，重连结果【" + this.getReadyState() + "】");
         }
@@ -275,8 +272,6 @@ public class WebSocket extends WebSocketClient {
     private volatile Handler mReconnectHandler;
 
     private void restartReconnectionTimer() {
-        Log.d(TAG, "restartReconnectionTimer reconnectAttempts:" + reconnectAttempts);
-
         if (mReconnectHandler == null) {
             HandlerThread reconnectHandlerThread = new HandlerThread("mReconnectHandler");
             reconnectHandlerThread.start();
@@ -284,8 +279,6 @@ public class WebSocket extends WebSocketClient {
                 @Override
                 public void handleMessage(Message msg) {
                     if (msg.what == MSG_RECONNECT) {
-                        Log.d(TAG, "execute reconnectTimerTask reconnectAttempts:" + reconnectAttempts);
-
                         if (reconnectAttempts >= maxReconnectAttempts) {
                             cancelReconnectionTimer();
                             if (debug) {
