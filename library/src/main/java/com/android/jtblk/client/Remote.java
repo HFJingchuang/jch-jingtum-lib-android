@@ -739,21 +739,23 @@ public class Remote {
             BigDecimal bi1 = new BigDecimal(amount1.getValue());
             BigDecimal bi2 = new BigDecimal(amount2.getValue());
             String curreny1 = amount1.getCurrency();
+            String issue1 = amount1.getIssuer();
             String curreny2 = amount2.getCurrency();
+            String issue2 = amount2.getIssuer();
             BigDecimal bi3;
             String currency;
-            if (TextUtils.equals(curreny1, "CNY")) {
+            if (TextUtils.equals(curreny1 + "_" + issue1, "CNY_jGa9J9TkqtBcUoHe2zqhVFFbgUVED6o9or")) {
                 bi3 = bi1.divide(bi2, 6, BigDecimal.ROUND_HALF_UP);
-                currency = curreny1;
-            } else if (TextUtils.equals(curreny2, "CNY")) {
+                currency = "CNT";
+            } else if (TextUtils.equals(curreny2 + "_" + issue2, "CNY_jGa9J9TkqtBcUoHe2zqhVFFbgUVED6o9or")) {
                 bi3 = bi2.divide(bi1, 6, BigDecimal.ROUND_HALF_UP);
-                currency = curreny2;
-            } else if (TextUtils.equals(curreny1, "SWT")) {
+                currency = "CNT";
+            } else if (TextUtils.equals(curreny1 + "_" + issue1, "SWT_")) {
                 bi3 = bi1.divide(bi2, 6, BigDecimal.ROUND_HALF_UP);
-                currency = curreny1;
-            } else if (TextUtils.equals(curreny2, "SWT")) {
+                currency = "SWTC";
+            } else if (TextUtils.equals(curreny2 + "_" + issue2, "SWT_")) {
                 bi3 = bi2.divide(bi1, 6, BigDecimal.ROUND_HALF_UP);
-                currency = curreny2;
+                currency = "SWTC";
             } else {
                 bi3 = bi1.divide(bi2, 6, BigDecimal.ROUND_HALF_UP);
                 currency = curreny1;
