@@ -1,6 +1,8 @@
 package com.android.jtblk.crypto.ecdsa;
 
-import java.math.BigInteger;
+import com.android.jtblk.utils.HashUtils;
+import com.android.jtblk.utils.Sha512;
+import com.android.jtblk.utils.Utils;
 
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
@@ -9,9 +11,7 @@ import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
 import org.bouncycastle.math.ec.ECPoint;
 
-import com.android.jtblk.utils.HashUtils;
-import com.android.jtblk.utils.Sha512;
-import com.android.jtblk.utils.Utils;
+import java.math.BigInteger;
 
 public class K256KeyPair implements IKeyPair {
 	BigInteger priv, pub, secretKey;

@@ -1,15 +1,14 @@
 package com.android.jtblk.keyStore;
 
 import com.android.jtblk.client.Wallet;
-import com.android.jtblk.utils.HexUtils;
-import com.android.jtblk.utils.KECCAK256;
 
 import org.spongycastle.crypto.digests.SHA256Digest;
 import org.spongycastle.crypto.generators.PKCS5S2ParametersGenerator;
 import org.spongycastle.crypto.generators.SCrypt;
 import org.spongycastle.crypto.params.KeyParameter;
+import org.web3j.crypto.Hash;
+import org.web3j.utils.Numeric;
 
-import java.nio.charset.Charset;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -23,6 +22,8 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class KeyStore {
 
@@ -59,12 +60,12 @@ public class KeyStore {
         byte[] salt = generateRandomBytes(32);
 
         byte[] derivedKey = generateDerivedScryptKey(
-                password.getBytes(Charset.forName("UTF-8")), salt, n, R, p, DKLEN);
+                password.getBytes(UTF_8), salt, n, R, p, DKLEN);
 
         byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
         byte[] iv = generateRandomBytes(16);
 
-        byte[] privateKeyBytes = wallet.getSecret().getBytes(Charset.forName("UTF-8"));
+        byte[] privateKeyBytes = wallet.getSecret().getBytes(UTF_8);
 
         byte[] cipherText = performCipherOperation(
                 Cipher.ENCRYPT_MODE, iv, encryptKey, privateKeyBytes);
@@ -97,7 +98,7 @@ public class KeyStore {
         System.arraycopy(derivedKey, 16, result, 0, 16);
         System.arraycopy(cipherText, 0, result, 16, cipherText.length);
 
-        return KECCAK256.keccak256(result);
+        return Hash.sha3(result);
     }
 
     private static byte[] generateDerivedScryptKey(
@@ -120,11 +121,11 @@ public class KeyStore {
 
         KeyStoreFile.Crypto crypto = new KeyStoreFile.Crypto();
         crypto.setCipher(CIPHER);
-        crypto.setCiphertext(HexUtils.toHex(cipherText));
+        crypto.setCiphertext(Numeric.toHexStringNoPrefix(cipherText));
         keyStoreFile.setCrypto(crypto);
 
         KeyStoreFile.CipherParams cipherParams = new KeyStoreFile.CipherParams();
-        cipherParams.setIv(HexUtils.toHex(iv));
+        cipherParams.setIv(Numeric.toHexStringNoPrefix(iv));
         crypto.setCipherparams(cipherParams);
 
         crypto.setKdf(SCRYPT);
@@ -133,10 +134,10 @@ public class KeyStore {
         kdfParams.setN(n);
         kdfParams.setP(p);
         kdfParams.setR(R);
-        kdfParams.setSalt(HexUtils.toHex(salt));
+        kdfParams.setSalt(Numeric.toHexStringNoPrefix(salt));
         crypto.setKdfparams(kdfParams);
 
-        crypto.setMac(HexUtils.toHex(mac));
+        crypto.setMac(Numeric.toHexStringNoPrefix(mac));
         keyStoreFile.setCrypto(crypto);
         keyStoreFile.setId(UUID.randomUUID().toString());
         keyStoreFile.setVersion(CURRENT_VERSION);
@@ -167,9 +168,9 @@ public class KeyStore {
 
         KeyStoreFile.Crypto crypto = walletFile.getCrypto();
 
-        byte[] mac = HexUtils.fromHex(crypto.getMac());
-        byte[] iv = HexUtils.fromHex(crypto.getCipherparams().getIv());
-        byte[] cipherText = HexUtils.fromHex(crypto.getCiphertext());
+        byte[] mac = Numeric.hexStringToByteArray(crypto.getMac());
+        byte[] iv = Numeric.hexStringToByteArray(crypto.getCipherparams().getIv());
+        byte[] cipherText = Numeric.hexStringToByteArray(crypto.getCiphertext());
 
         byte[] derivedKey;
 
@@ -181,16 +182,16 @@ public class KeyStore {
             int n = scryptKdfParams.getN();
             int p = scryptKdfParams.getP();
             int r = scryptKdfParams.getR();
-            byte[] salt = HexUtils.fromHex(scryptKdfParams.getSalt());
-            derivedKey = com.lambdaworks.crypto.SCrypt.scryptN(password.getBytes(Charset.forName("UTF-8")), salt, n, r, p, dklen);
+            byte[] salt = Numeric.hexStringToByteArray(scryptKdfParams.getSalt());
+            derivedKey = com.lambdaworks.crypto.SCrypt.scryptN(password.getBytes(UTF_8), salt, n, r, p, dklen);
         } else if (kdfParams instanceof KeyStoreFile.Aes128CtrKdfParams) {
             KeyStoreFile.Aes128CtrKdfParams aes128CtrKdfParams =
                     (KeyStoreFile.Aes128CtrKdfParams) crypto.getKdfparams();
             int c = aes128CtrKdfParams.getC();
             String prf = aes128CtrKdfParams.getPrf();
-            byte[] salt = HexUtils.fromHex(aes128CtrKdfParams.getSalt());
+            byte[] salt = Numeric.hexStringToByteArray(aes128CtrKdfParams.getSalt());
 
-            derivedKey = generateAes128CtrDerivedKey(password.getBytes(Charset.forName("UTF-8")),
+            derivedKey = generateAes128CtrDerivedKey(password.getBytes(UTF_8),
                     salt, c, prf);
         } else {
             throw new CipherException("Unable to deserialize params: " + crypto.getKdf());
@@ -204,7 +205,7 @@ public class KeyStore {
 
         byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
         byte[] privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
-        return Wallet.fromSecret(new String(privateKey, Charset.forName("UTF-8")));
+        return Wallet.fromSecret(new String(privateKey, UTF_8));
     }
 
     private static byte[] generateAes128CtrDerivedKey(

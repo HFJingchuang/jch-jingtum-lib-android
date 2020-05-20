@@ -2,6 +2,7 @@ package com.android.jtblk.core.types.known.tx.signed;
 
 import java.util.Arrays;
 
+import com.android.jtblk.client.Wallet;
 import com.android.jtblk.core.coretypes.Amount;
 import com.android.jtblk.core.coretypes.Blob;
 import com.android.jtblk.core.coretypes.STObject;
@@ -16,6 +17,10 @@ import com.android.jtblk.core.types.known.tx.Transaction;
 import com.android.jtblk.crypto.ecdsa.IKeyPair;
 import com.android.jtblk.crypto.ecdsa.Seed;
 
+import org.web3j.utils.Numeric;
+
+import static com.android.jtblk.utils.Utils.uBigInt;
+
 public class SignedTransaction {
     private SignedTransaction(Transaction of) {
         // TODO: is this just over kill ?
@@ -24,7 +29,8 @@ public class SignedTransaction {
 
     // This will eventually be private
     @Deprecated
-    public SignedTransaction() {}
+    public SignedTransaction() {
+    }
 
     public Transaction txn;
     public Hash256 hash;
@@ -34,7 +40,11 @@ public class SignedTransaction {
     public String tx_blob;
 
     public void sign(String base58Secret) {
-        sign(Seed.fromBase58(base58Secret).keyPair());
+        if (Wallet.isValidSecret(base58Secret)) {
+            sign(Seed.fromBase58(base58Secret).keyPair());
+        } else {
+            sign(Seed.fromPrivateKey(uBigInt(Numeric.hexStringToByteArray(base58Secret))));
+        }
     }
 
     public static SignedTransaction fromTx(Transaction tx) {
@@ -64,12 +74,12 @@ public class SignedTransaction {
         }
 
         txn.signingPubKey(pubKey);
-       
+
 
         if (Transaction.CANONICAL_FLAG_DEPLOYED) {
             txn.setCanonicalSignatureFlag();
         }
-       
+
         txn.checkFormat();
         signingData = txn.signingData();
         //System.out.println("------------");

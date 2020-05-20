@@ -1,6 +1,7 @@
 package com.android.jtblk;
 
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 
 import com.android.jtblk.client.Remote;
 import com.android.jtblk.client.Transaction;
@@ -8,6 +9,7 @@ import com.android.jtblk.client.bean.Account;
 import com.android.jtblk.client.bean.AccountInfo;
 import com.android.jtblk.client.bean.AccountTx;
 import com.android.jtblk.client.bean.AmountInfo;
+import com.android.jtblk.client.bean.Marker;
 import com.android.jtblk.client.bean.Memo;
 import com.android.jtblk.client.bean.TransactionInfo;
 import com.android.jtblk.client.bean.Transactions;
@@ -30,8 +32,9 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class TransactionTest {
 
-//     static String server = "wss://s.jingtum.com:5020";// 生产环境
-    static String server = "ws://ts5.jingtum.com:5020";// 测试环境
+//    static String server = "wss://s.jingtum.com:5020";// 生产环境
+//    static String server = "ws://47.105.98.127:5020";// 生产环境
+        static String server = "ws://ts5.jingtum.com:5020";// 测试环境
     static Boolean local_sign = true;// 是否使用本地签名方式提交交易
     static Connection conn = ConnectionFactory.getCollection(server);
     static Remote remote = new Remote(conn, local_sign);
@@ -79,7 +82,7 @@ public class TransactionTest {
      */
     @Test
     public void getTx() throws Exception {
-        String hash = "77D66074F56B76618DF30B04DCDB12E0A5E8D3B895404402E46C737E7EB194BD";
+        String hash = "AA0E233A33254AFABF3C6E4185AA925B0D02D74E5A79DAA4B97FB65F1D730998";
         Account bean = remote.requestTx(hash);
         System.out.println("from:" + bean.getAccount());
         System.out.println("to:" + bean.getDestination());
@@ -103,7 +106,7 @@ public class TransactionTest {
      */
     @Test
     public void getSwtcBleans() throws Exception {
-        String account = "j3UcBBbes7HFgmTLmGkEQQShM2jdHbdGAe";
+        String account = "jNn89aY84G23onFXupUd7bkMode6aKYMt8";
         AccountInfo bean = remote.requestAccountInfo(account, null, null);
         System.out.println("j3UcBBbes7HFgmTLmGkEQQShM2jdHbdGAe---SWTC余额：" + bean.getAccountData().getBalance());
         Assert.assertNotNull(bean.getAccountData().getBalance());
@@ -116,30 +119,39 @@ public class TransactionTest {
      */
     @Test
     public void getTxs() throws Exception {
-        String account = "j3UcBBbes7HFgmTLmGkEQQShM2jdHbdGAe";
-        AccountTx accountTx = remote.requestAccountTx(account, 5, null);// 前五条数据
-        AccountTx accountTx2 = remote.requestAccountTx(account, 5, accountTx.getMarker());// 后五条数据
-        for (Transactions a : accountTx.getTransactions()) {
-            System.out.println("date:" + a.getDate() + "======hash:" + a.getHash());
-            if (a.getMemos() != null) {
-                for (Memo memo : a.getMemos()) {
-                    System.out.println(memo.getMemoData());
-                }
-            }
-            System.out.println(a.getEffects().toString());
+        String account = "jBvrdYc6G437hipoCiEpTwrWSRBS2ahXN6";
+        AccountTx accountTx = remote.requestAccountTx(account, 10, null);// 前五条数据
+//        AccountTx accountTx2 = remote.requestAccountTx(account, 10, accountTx.getMarker());// 后五条数据
+        List<Transactions> list = new ArrayList<>();
+        for (int i = 0; i < 14; i++) {
+            Marker marker = accountTx.getMarker();
+            System.out.println(marker.getLedger() + "," + marker.getSeq());
+//            Log.v("onEvent", marker.getLedger() + "," + marker.getSeq());
+            accountTx = remote.requestAccountTx(account, 10, marker);// 后五条数据
+            list.addAll(accountTx.getTransactions());
         }
-        System.out.println("------------------");
-        for (Transactions a : accountTx2.getTransactions()) {
-            System.out.println(a.getDate());
-            if (a.getMemos() != null) {
-                for (Memo memo : a.getMemos()) {
-                    System.out.println(memo.getMemoData());
-                }
-            }
-            System.out.println(a.getEffects().toString());
-        }
-        Assert.assertEquals(accountTx.getTransactions().size(), 5);
-        Assert.assertEquals(accountTx2.getTransactions().size(), 5);
+
+//        for (Transactions a : accountTx.getTransactions()) {
+//            System.out.println("date:" + a.getDate() + "======hash:" + a.getHash());
+//            if (a.getMemos() != null) {
+//                for (Memo memo : a.getMemos()) {
+//                    System.out.println(memo.getMemoData());
+//                }
+//            }
+//            System.out.println(a.getEffects().toString());
+//        }
+//        System.out.println("------------------");
+//        for (Transactions a : accountTx2.getTransactions()) {
+//            System.out.println(a.getDate());
+//            if (a.getMemos() != null) {
+//                for (Memo memo : a.getMemos()) {
+//                    System.out.println(memo.getMemoData());
+//                }
+//            }
+//            System.out.println(a.getEffects().toString());
+//        }
+//        Assert.assertEquals(accountTx.getTransactions().size(), 5);
+//        Assert.assertEquals(accountTx2.getTransactions().size(), 5);
     }
 
 }
