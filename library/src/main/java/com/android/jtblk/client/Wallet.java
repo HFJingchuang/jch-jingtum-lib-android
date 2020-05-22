@@ -1,5 +1,9 @@
 package com.android.jtblk.client;
 
+import com.android.jtblk.BIP39.WordCount;
+import com.android.jtblk.BIP39.WordList;
+import com.android.jtblk.BIP44.AddressIndex;
+import com.android.jtblk.BIP44.Bip44WalletGenerator;
 import com.android.jtblk.crypto.ecdsa.IKeyPair;
 import com.android.jtblk.crypto.ecdsa.Seed;
 import com.android.jtblk.encoding.B58IdentiferCodecs;
@@ -27,29 +31,8 @@ public class Wallet {
      *
      * @return
      */
-    public static Wallet generate() {
-        String secret = new Seed().random();
-        IKeyPair keypairs = Seed.fromBase58(secret).keyPair();
-        Wallet wallet = new Wallet();
-        wallet.setKeypairs(keypairs);
-        wallet.setSecret(secret);
-        return wallet;
-    }
-
-    /**
-     * 随机生成ED25519钱包地址
-     *
-     * @return
-     */
-    public static Wallet generateED25519() {
-        Seed seed = new Seed();
-        seed.setEd25519();
-        String secret = seed.random();
-        IKeyPair keypairs = Seed.fromBase58(secret).keyPair();
-        Wallet wallet = new Wallet();
-        wallet.setKeypairs(keypairs);
-        wallet.setSecret(secret);
-        return wallet;
+    public static Wallet generate(WordList wordList, WordCount wordCount, boolean isED25519) {
+        return new Bip44WalletGenerator(wordList, wordCount).generateWallet(null, isED25519);
     }
 
     /**
@@ -83,6 +66,29 @@ public class Wallet {
             wallet.setKeypairs(seed.fromPrivateKey(secret));
         }
         return wallet;
+    }
+
+    /**
+     * 根据助记词生成钱包
+     *
+     * @param mnemonics
+     * @param isED25519
+     * @return
+     */
+    public static Wallet fromMnemonics(String mnemonics, boolean isED25519) {
+        return Bip44WalletGenerator.fromMnemonic(mnemonics, null, isED25519);
+    }
+
+    /**
+     * 根据助记词和路径生成钱包
+     *
+     * @param mnemonics
+     * @param addressIndex
+     * @param isED25519
+     * @return
+     */
+    public static Wallet fromMnemonicWithPath(String mnemonics, AddressIndex addressIndex, boolean isED25519) {
+        return Bip44WalletGenerator.fromMnemonicWithPath(mnemonics, null, addressIndex, isED25519);
     }
 
     public String getPublicKey() {

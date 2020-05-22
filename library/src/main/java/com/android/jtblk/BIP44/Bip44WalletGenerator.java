@@ -17,9 +17,12 @@ import com.android.jtblk.BIP39.RandomSeed;
 import com.android.jtblk.BIP39.WordCount;
 import com.android.jtblk.BIP39.WordList;
 import com.android.jtblk.client.Wallet;
+import com.android.jtblk.crypto.ecdsa.IKeyPair;
 import com.android.jtblk.crypto.ecdsa.Seed;
 import com.android.jtblk.utils.MnemonicGenerator;
 import com.android.jtblk.utils.Utils;
+
+import java.util.Arrays;
 
 public class Bip44WalletGenerator {
 
@@ -59,6 +62,56 @@ public class Bip44WalletGenerator {
     }
 
     /**
+     * Generates a BIP-44 compatible SWTC wallet on top of BIP-39 generated seed.
+     *
+     * @param password  Will be used for both wallet encryption and passphrase for BIP-39 seed
+     * @param isED25519 Generates a SWTC wallet by ed25519
+     * @return A BIP-39 compatible SWTC wallet
+     */
+    public static Wallet generateWallet(
+            String password, boolean isED25519) {
+        byte[] initialEntropy = RandomSeed.random(wordCount);
+        String mnemonic = new MnemonicGenerator(wordList).generateMnemonic(initialEntropy);
+        byte[] seedByte = new MnemonicGenerator(wordList).generateSeed(mnemonic, password);
+
+        Wallet wallet = new Wallet();
+        Seed seed = new Seed();
+        if (isED25519) {
+            seed.setEd25519();
+        }
+        String secret = seed.encodeSeed(Arrays.copyOf(seedByte, 16));
+        IKeyPair keypairs = Seed.fromBase58(secret).keyPair();
+        wallet.setKeypairs(keypairs);
+        wallet.setSecret(secret);
+        wallet.setMnemonics(mnemonic);
+        return wallet;
+    }
+
+    /**
+     * Generates a BIP-44 compatible SWTC wallet by mnemonic.
+     *
+     * @param mnemonic
+     * @param password  Will be used for both wallet encryption and passphrase for BIP-39 seed
+     * @param isED25519 Generates a SWTC wallet by ed25519
+     * @return
+     */
+    public static Wallet fromMnemonic(
+            String mnemonic, String password, boolean isED25519) {
+        byte[] seedByte = MnemonicGenerator.generateSeed(mnemonic, password);
+        Seed seed = new Seed();
+        if (isED25519) {
+            seed.setEd25519();
+        }
+        Wallet wallet = new Wallet();
+        String secret = seed.encodeSeed(Arrays.copyOf(seedByte, 16));
+        IKeyPair keypairs = Seed.fromBase58(secret).keyPair();
+        wallet.setKeypairs(keypairs);
+        wallet.setSecret(secret);
+        wallet.setMnemonics(mnemonic);
+        return wallet;
+    }
+
+    /**
      * Generates a BIP-44 compatible SWTC wallet by mnemonic.
      *
      * @param mnemonic
@@ -67,7 +120,7 @@ public class Bip44WalletGenerator {
      * @param isED25519    Generates a SWTC wallet by ed25519
      * @return
      */
-    public static Wallet fromMnemonic(
+    public static Wallet fromMnemonicWithPath(
             String mnemonic, String password, AddressIndex addressIndex, boolean isED25519) {
         byte[] seedByte = MnemonicGenerator.generateSeed(mnemonic, password);
         Bip32ECKeyPair masterKeypair = Bip32ECKeyPair.generateKeyPair(seedByte);

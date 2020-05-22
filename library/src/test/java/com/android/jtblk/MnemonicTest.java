@@ -30,9 +30,16 @@ import java.util.List;
  */
 public class MnemonicTest {
 
+    @Test
+    public void generateWallet() {
+        Wallet wallet = new Bip44WalletGenerator(Chinese_simplified.INSTANCE, WordCount.TWELVE).generateWallet(null, false);
+        System.out.println(wallet.getAddress());
+        System.out.println(wallet.getMnemonics());
+        System.out.println(wallet.getSecret());
+    }
 
     @Test
-    public void mnemonic() {
+    public void generateBip44Wallet() {
         AddressIndex addressIndex = BIP44.m()
                 .purpose44()
                 .coinType(CoinTypes.SWTC)
@@ -68,7 +75,7 @@ public class MnemonicTest {
     }
 
     @Test
-    public void fromMnemonic() {
+    public void fromMnemonicWithPath() {
         AddressIndex addressIndex = BIP44.m()
                 .purpose44()
                 .coinType(CoinTypes.SWTC)
@@ -76,13 +83,13 @@ public class MnemonicTest {
                 .external()
                 .address(0);
         String mnemonic = "馏 标 骗 孩 挑 蒸 座 希 原 门 挖 序";
-        Wallet wallet = Bip44WalletGenerator.fromMnemonic(mnemonic, null, addressIndex, false);
+        Wallet wallet = Bip44WalletGenerator.fromMnemonicWithPath(mnemonic, null, addressIndex, false);
         Assert.assertEquals("j41M6Qjp7k9CcrRMA4vZrX37HorymBHUaB", wallet.getAddress());
         Assert.assertEquals("馏 标 骗 孩 挑 蒸 座 希 原 门 挖 序", wallet.getMnemonics());
         Assert.assertEquals("005570847FC13CC17B93637BC54A200748EC2538385FB4E5DFDDDCE3703A0E873D", wallet.getSecret().toUpperCase());
 
         mnemonic = "利 闷 辑 态 狂 诸 追 曹 给 补 乳 逻";
-        wallet = Bip44WalletGenerator.fromMnemonic(mnemonic, null, addressIndex, true);
+        wallet = Bip44WalletGenerator.fromMnemonicWithPath(mnemonic, null, addressIndex, true);
         Assert.assertEquals("jPc7zYrBqQGhsC6keSzKdbCF1xtkNbgfeN", wallet.getAddress());
         Assert.assertEquals("利 闷 辑 态 狂 诸 追 曹 给 补 乳 逻", wallet.getMnemonics());
         Assert.assertEquals("ED8DC3100DBC100C954E0789F7EE47BD95042D011F2C6A39D5BD6AA2CD885FF1D3", wallet.getSecret().toUpperCase());
@@ -95,16 +102,25 @@ public class MnemonicTest {
                 .address(1);
 
         mnemonic = "接 呼 彩 它 巡 文 建 烟 轰 若 雕 隆";
-        wallet = Bip44WalletGenerator.fromMnemonic(mnemonic, null, addressIndex, false);
+        wallet = Bip44WalletGenerator.fromMnemonicWithPath(mnemonic, null, addressIndex, false);
         Assert.assertEquals("jQfAkMrHxb3X8kuPzPaX2ugNG8GMpYNLTk", wallet.getAddress());
         Assert.assertEquals("接 呼 彩 它 巡 文 建 烟 轰 若 雕 隆", wallet.getMnemonics());
         Assert.assertEquals("0013EDBDAE522E426F60CD265F5403EF79B81ACAD4600410D1F2A4577716F4588C", wallet.getSecret().toUpperCase());
 
         mnemonic = "希 阁 问 辑 漂 可 存 民 狠 搭 棒 摇";
-        wallet = Bip44WalletGenerator.fromMnemonic(mnemonic, null, addressIndex, true);
+        wallet = Bip44WalletGenerator.fromMnemonicWithPath(mnemonic, null, addressIndex, true);
         Assert.assertEquals("jwGg4kKqkaDc5HRVFnTmFrgRhDw7vEjwRE", wallet.getAddress());
         Assert.assertEquals("希 阁 问 辑 漂 可 存 民 狠 搭 棒 摇", wallet.getMnemonics());
         Assert.assertEquals("EDF228D440049F6C9A65B13180B43FB6C0775165C719832F97EB244166D44DECC9", wallet.getSecret().toUpperCase());
+    }
+
+    @Test
+    public void fromMnemonic() {
+        String mnemonic = "头 玄 秒 站 致 源 省 却 景 熙 奇 将";
+        Wallet wallet = Bip44WalletGenerator.fromMnemonic(mnemonic, null, false);
+        Assert.assertEquals("jHJSCzjAeZWJrR1MKzU3JdWSTrivHCccLV", wallet.getAddress());
+        Assert.assertEquals("头 玄 秒 站 致 源 省 却 景 熙 奇 将", wallet.getMnemonics());
+        Assert.assertEquals("shc9m9iNVPcnhxfedr5kVa2vg2Xov", wallet.getSecret());
     }
 
     @Test
@@ -116,7 +132,7 @@ public class MnemonicTest {
                 .external()
                 .address(0);
         String mnemonic = "毅 层 驾 兼 岛 河 练 骨 夺 阻 释 宪";
-        Wallet wallet = Bip44WalletGenerator.fromMnemonic(mnemonic, null, addressIndex, true);
+        Wallet wallet = Bip44WalletGenerator.fromMnemonicWithPath(mnemonic, null, addressIndex, true);
 
         try {
             KeyStoreFile keyStoreFile = KeyStore.createLight("Key123456", wallet);
@@ -131,7 +147,7 @@ public class MnemonicTest {
 
     @Test
     public void signLocal() {
-        Wallet wallet = Wallet.generate();
+        Wallet wallet = Wallet.generate(Chinese_simplified.INSTANCE, WordCount.TWELVE, false);
 
 //        AmountInfo amountInfo = new AmountInfo();
 //        amountInfo.setCurrency("SWT");// 转出代币简称
@@ -154,7 +170,7 @@ public class MnemonicTest {
         SignedTransaction signedTx1 = payment.sign(wallet.getKeypairs().canonicalPriHex());// 签名
         Assert.assertEquals(signedTx.tx_blob, signedTx1.tx_blob);
 
-        Wallet wallet1 = Wallet.generateED25519();
+        Wallet wallet1 = Wallet.generate(Chinese_simplified.INSTANCE, WordCount.TWELVE, true);
 
         payment = new Payment();
         payment.as(AccountID.Account, wallet1.getAddress());
