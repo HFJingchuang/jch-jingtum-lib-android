@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Wallet wallet = Wallet.fromSecret("shExMjiMqza4DdMaSg3ra9vxWPZsQ");
+        Wallet wallet = Wallet.fromSecret("shExMjiMqza4DdMaSg3ra9vxWPZsQ", false);
         KeyStoreFile keyStoreFile = null;
         try {
             keyStoreFile = KeyStore.createLight("Key123456", wallet);

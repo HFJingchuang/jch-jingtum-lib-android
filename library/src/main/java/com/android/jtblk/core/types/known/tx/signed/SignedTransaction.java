@@ -16,6 +16,7 @@ import com.android.jtblk.core.serialized.enums.TransactionType;
 import com.android.jtblk.core.types.known.tx.Transaction;
 import com.android.jtblk.crypto.ecdsa.IKeyPair;
 import com.android.jtblk.crypto.ecdsa.Seed;
+import com.android.jtblk.exceptions.PrivateKeyFormatException;
 
 import org.web3j.utils.Numeric;
 
@@ -43,8 +44,18 @@ public class SignedTransaction {
         if (Wallet.isValidSecret(base58Secret)) {
             sign(Seed.fromBase58(base58Secret).keyPair());
         } else {
-            sign(Seed.fromPrivateKey(uBigInt(Numeric.hexStringToByteArray(base58Secret))));
+            Seed seed = new Seed();
+            if (base58Secret.length() == 66) {
+                if (base58Secret.toUpperCase().startsWith("ED")) {
+                    seed.setEd25519();
+                }
+                base58Secret = base58Secret.substring(2);
+            } else {
+                throw new PrivateKeyFormatException("the length of private key must be 66");
+            }
+            sign(seed.fromPrivateKey(base58Secret));
         }
+
     }
 
     public static SignedTransaction fromTx(Transaction tx) {

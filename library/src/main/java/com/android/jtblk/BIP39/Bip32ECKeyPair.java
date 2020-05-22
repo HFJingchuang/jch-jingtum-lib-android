@@ -35,8 +35,6 @@ import static org.web3j.crypto.Hash.sha256hash160;
  * * https://github.com/bitcoinj/bitcoinj/blob/master/core/src/main/java/org/bitcoinj/crypto/DeterministicKey.java
  */
 public class Bip32ECKeyPair extends ECKeyPair {
-    public static final int HARDENED_BIT = 0x80000000;
-
     private final boolean parentHasPrivate;
     private final int childNumber;
     private final int depth;

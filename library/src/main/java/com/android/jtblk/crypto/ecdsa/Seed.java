@@ -1,6 +1,13 @@
 package com.android.jtblk.crypto.ecdsa;
 
-import static com.android.jtblk.config.Config.getB58IdentiferCodecs;
+import com.android.jtblk.config.Config;
+import com.android.jtblk.encoding.B58IdentiferCodecs;
+import com.android.jtblk.encoding.base58.B58;
+import com.android.jtblk.utils.SecureRandomUtils;
+import com.android.jtblk.utils.Sha512;
+import com.android.jtblk.utils.Utils;
+
+import org.web3j.utils.Numeric;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
@@ -9,17 +16,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Random;
 
-import com.android.jtblk.config.Config;
-import com.android.jtblk.encoding.B58IdentiferCodecs;
-import com.android.jtblk.encoding.base58.B58;
-import com.android.jtblk.utils.SecureRandomUtils;
-import com.android.jtblk.utils.Sha512;
-import com.android.jtblk.utils.Utils;
+import static com.android.jtblk.config.Config.getB58IdentiferCodecs;
+import static com.android.jtblk.utils.Utils.uBigInt;
 
 public class Seed {
     public static byte[] VER_K256 = new byte[]{(byte) B58IdentiferCodecs.VER_FAMILY_SEED};
     public static byte[] VER_ED25519 = new byte[]{(byte) 0x1, (byte) 0xe1, (byte) 0x4b};
-    final byte[] seedBytes;
+    byte[] seedBytes;
     byte[] version;
 
     public Seed(byte[] seedBytes) {
@@ -29,6 +32,9 @@ public class Seed {
     public Seed(byte[] version, byte[] seedBytes) {
         this.seedBytes = seedBytes;
         this.version = version;
+    }
+
+    public Seed() {
     }
 
     @Override
@@ -44,9 +50,8 @@ public class Seed {
         return version;
     }
 
-    public Seed setEd25519() {
+    public void setEd25519() {
         this.version = VER_ED25519;
-        return this;
     }
 
     public IKeyPair keyPair() {
@@ -73,9 +78,14 @@ public class Seed {
         return new Seed(decoded.version, decoded.payload);
     }
 
-    public static IKeyPair fromPrivateKey(BigInteger priv) {
-        BigInteger pub = K256KeyPair.computePublicKey(priv);
-        return new K256KeyPair(priv, pub);
+    public IKeyPair fromPrivateKey(String privatekey) {
+        if (Arrays.equals(this.version, VER_ED25519)) {
+            return EDKeyPair.from256Seed(Numeric.hexStringToByteArray(privatekey));
+        } else {
+            BigInteger priv = uBigInt(Numeric.hexStringToByteArray(privatekey));
+            BigInteger pub = K256KeyPair.computePublicKey(priv);
+            return new K256KeyPair(priv, pub);
+        }
     }
 
     public static Seed fromPassPhrase(String passPhrase) {
@@ -117,31 +127,38 @@ public class Seed {
         return getKeyPair(getB58IdentiferCodecs().decodeFamilySeed(b58));
     }
 
-    public static String random() {
+    public String random() {
         byte[] randBytes = new byte[16];
         Random random = SecureRandomUtils.secureRandom();
         random.nextBytes(randBytes);
         return encodeSeed(randBytes);
     }
 
-    public static String encodeSeed(byte[] seedBytes) {
+    public String encodeSeed(byte[] seedBytes) {
         if (seedBytes.length != 16) {
             throw new RuntimeException("the length of seed must be 16.");
         }
-        byte[] bytes = new byte[seedBytes.length + 1];
-        bytes[0] = (byte) Config.SEED_PREFIX;
-        System.arraycopy(seedBytes, 0, bytes, 1, seedBytes.length);
-        byte[] sha256 = null;
+        byte[] bytes;
+        if (Arrays.equals(this.version, VER_ED25519)) {
+            bytes = new byte[seedBytes.length + 3];
+            System.arraycopy(Config.ED25519_SEED_PREFIX, 0, bytes, 0, 3);
+            System.arraycopy(seedBytes, 0, bytes, 3, seedBytes.length);
+        } else {
+            bytes = new byte[seedBytes.length + 1];
+            bytes[0] = (byte) Config.SEED_PREFIX;
+            System.arraycopy(seedBytes, 0, bytes, 1, seedBytes.length);
+        }
         try {
-            sha256 = MessageDigest.getInstance("SHA-256").digest(bytes);
+            byte[] sha256 = MessageDigest.getInstance("SHA-256").digest(bytes);
             sha256 = MessageDigest.getInstance("SHA-256").digest(sha256);
+            byte[] checksum = Arrays.copyOf(sha256, 4);
+            byte[] ret = new byte[bytes.length + checksum.length];
+            System.arraycopy(bytes, 0, ret, 0, bytes.length);
+            System.arraycopy(checksum, 0, ret, bytes.length, checksum.length);
+            return Config.getB58().encodeToString(ret);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
+            return "";
         }
-        byte[] checksum = Arrays.copyOf(sha256, 4);
-        byte[] ret = new byte[bytes.length + checksum.length];
-        System.arraycopy(bytes, 0, ret, 0, bytes.length);
-        System.arraycopy(checksum, 0, ret, bytes.length, checksum.length);
-        return Config.getB58().encodeToString(ret);
     }
 }

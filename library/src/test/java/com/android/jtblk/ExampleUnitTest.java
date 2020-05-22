@@ -44,7 +44,7 @@ public class ExampleUnitTest {
             Wallet decryptEthECKeyPair = KeyStore.decrypt("Key123456", keyStoreFile);
             System.out.println("address:" + decryptEthECKeyPair.getAddress());
             System.out.println("PrivateKey:" + decryptEthECKeyPair.getSecret());
-        } catch (CipherException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

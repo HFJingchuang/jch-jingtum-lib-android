@@ -4,14 +4,9 @@ import com.android.jtblk.crypto.ecdsa.IKeyPair;
 import com.android.jtblk.crypto.ecdsa.Seed;
 import com.android.jtblk.encoding.B58IdentiferCodecs;
 import com.android.jtblk.encoding.common.B16;
-
-import org.web3j.utils.Numeric;
-
-import java.math.BigInteger;
+import com.android.jtblk.exceptions.PrivateKeyFormatException;
 
 import static com.android.jtblk.config.Config.getB58IdentiferCodecs;
-import static com.android.jtblk.utils.Utils.uBigInt;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class Wallet {
     private IKeyPair keypairs = null;
@@ -33,7 +28,23 @@ public class Wallet {
      * @return
      */
     public static Wallet generate() {
-        String secret = Seed.random();
+        String secret = new Seed().random();
+        IKeyPair keypairs = Seed.fromBase58(secret).keyPair();
+        Wallet wallet = new Wallet();
+        wallet.setKeypairs(keypairs);
+        wallet.setSecret(secret);
+        return wallet;
+    }
+
+    /**
+     * 随机生成ED25519钱包地址
+     *
+     * @return
+     */
+    public static Wallet generateED25519() {
+        Seed seed = new Seed();
+        seed.setEd25519();
+        String secret = seed.random();
         IKeyPair keypairs = Seed.fromBase58(secret).keyPair();
         Wallet wallet = new Wallet();
         wallet.setKeypairs(keypairs);
@@ -45,9 +56,10 @@ public class Wallet {
      * 根据密钥生成钱包
      *
      * @param secret
+     * @param isED25519
      * @return
      */
-    public static Wallet fromSecret(String secret) {
+    public static Wallet fromSecret(String secret, boolean isED25519) {
         Wallet wallet = new Wallet();
         if (Wallet.isValidSecret(secret)) {
             IKeyPair keypairs = Seed.fromBase58(secret).keyPair();
@@ -55,7 +67,20 @@ public class Wallet {
             wallet.setKeypairs(keypairs);
             wallet.setSecret(secret);
         } else {
-            wallet.setKeypairs(Seed.fromPrivateKey(uBigInt(Numeric.hexStringToByteArray(secret))));
+            Seed seed = new Seed();
+            if (secret.length() == 64) {
+                if (isED25519) {
+                    seed.setEd25519();
+                }
+            } else if (secret.length() == 66) {
+                if (secret.toUpperCase().startsWith("ED")) {
+                    seed.setEd25519();
+                }
+                secret = secret.substring(2);
+            } else {
+                throw new PrivateKeyFormatException("deriving keypair requires correct prefixed private key");
+            }
+            wallet.setKeypairs(seed.fromPrivateKey(secret));
         }
         return wallet;
     }
@@ -129,7 +154,7 @@ public class Wallet {
 
     public String getSecret() {
         if (this.secret == null || this.secret.isEmpty()) {
-            return this.keypairs.privHex();
+            return this.keypairs.canonicalPriHex();
         } else {
             return this.secret;
         }

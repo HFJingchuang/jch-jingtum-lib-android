@@ -6,6 +6,8 @@ public interface IKeyPair {
 	String canonicalPubHex();
 	
 	byte[] canonicalPubBytes();
+
+	String canonicalPriHex();
 	
 	BigInteger pub();
 	

@@ -1,6 +1,7 @@
 package com.android.jtblk.keyStore;
 
 import com.android.jtblk.client.Wallet;
+import com.android.jtblk.utils.SecureRandomUtils;
 
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.generators.PKCS5S2ParametersGenerator;
@@ -42,7 +43,7 @@ public class KeyStore {
     static final String AES_128_CTR = "pbkdf2";
     static final String SCRYPT = "scrypt";
 
-    private static SecureRandom secureRandom = new SecureRandom();
+    private static SecureRandom secureRandom = SecureRandomUtils.secureRandom();
 
     public static KeyStoreFile createStandard(String password, Wallet wallet)
             throws CipherException {
@@ -161,8 +162,7 @@ public class KeyStore {
         }
     }
 
-    public static Wallet decrypt(String password, KeyStoreFile walletFile)
-            throws CipherException {
+    public static Wallet decrypt(String password, KeyStoreFile walletFile) throws CipherException {
 
         validate(walletFile);
 
@@ -205,7 +205,7 @@ public class KeyStore {
 
         byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
         byte[] privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
-        return Wallet.fromSecret(new String(privateKey, UTF_8));
+        return Wallet.fromSecret(new String(privateKey, UTF_8), false);
     }
 
     private static byte[] generateAes128CtrDerivedKey(
